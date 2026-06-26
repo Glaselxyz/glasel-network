@@ -33,3 +33,6 @@ secrets.env
 contracts/*.e2e.*
 contracts/e2e-artifact.json
 node/vendor/
+
+# npm auth
+.npmrc

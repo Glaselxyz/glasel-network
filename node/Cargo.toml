@@ -6,6 +6,10 @@ members = ["crates/glasel-crypto", "crates/glasel-circuit", "crates/glasel-mpc",
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+repository = "https://github.com/Glaselxyz/glasel-network"
+homepage = "https://github.com/Glaselxyz/glasel-network"
+authors = ["Glasel"]
+rust-version = "1.75"
 
 [workspace.dependencies]
 num-bigint = { version = "0.4", features = ["serde"] }

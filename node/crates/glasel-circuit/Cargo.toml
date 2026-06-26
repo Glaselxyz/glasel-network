@@ -3,9 +3,14 @@ name = "glasel-circuit"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Glasel Network arithmetic-circuit IR, optimizer, simulator, binary format, and the Arcis-style Rust DSL for authoring confidential computations."
 
 [dependencies]
-glasel-crypto = { path = "../glasel-crypto" }
+glasel-crypto = { path = "../glasel-crypto", version = "0.1.0" }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 serde = { workspace = true }

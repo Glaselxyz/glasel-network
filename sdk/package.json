@@ -1,12 +1,51 @@
 {
   "name": "@glasel/client",
   "version": "0.1.0",
-  "description": "TypeScript client SDK for the Glasel Network — X25519 + Rescue encryption and computation lifecycle helpers.",
+  "description": "TypeScript client SDK for the Glasel Network — confidential computing on Base. X25519 + Rescue encryption and computation lifecycle helpers.",
+  "license": "MIT",
   "type": "module",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Glaselxyz/glasel-network.git",
+    "directory": "sdk"
+  },
+  "homepage": "https://github.com/Glaselxyz/glasel-network/tree/main/sdk#readme",
+  "bugs": {
+    "url": "https://github.com/Glaselxyz/glasel-network/issues"
+  },
+  "keywords": [
+    "glasel",
+    "confidential-computing",
+    "mpc",
+    "privacy",
+    "encryption",
+    "base",
+    "ethereum",
+    "web3",
+    "x25519",
+    "blockchain"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

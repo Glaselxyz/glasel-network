@@ -1,0 +1,70 @@
+# Build prebuilt `glaselvm` CLI binaries and attach them to a GitHub Release.
+# Trigger: push a tag like `v0.1.0` (or run manually).
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# Produces one tarball per platform on the Release page, so developers can install
+# the circuit-authoring CLI without a Rust toolchain.
+name: release-cli
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: node
+
+      - name: Build glaselvm
+        working-directory: node
+        run: cargo build --release -p glaselvm --target ${{ matrix.target }}
+
+      - name: Package tarball
+        working-directory: node
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          DIST="glaselvm-${TAG}-${{ matrix.target }}"
+          mkdir -p "$DIST"
+          cp "target/${{ matrix.target }}/release/glaselvm" "$DIST/"
+          cp ../README.md ../LICENSE "$DIST/" 2>/dev/null || true
+          tar -czf "${DIST}.tar.gz" "$DIST"
+          shasum -a 256 "${DIST}.tar.gz" > "${DIST}.tar.gz.sha256"
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: |
+            node/glaselvm-*.tar.gz
+            node/glaselvm-*.tar.gz.sha256

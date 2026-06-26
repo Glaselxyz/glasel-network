@@ -3,14 +3,20 @@ name = "glaselvm"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Glasel Network CLI: scaffold, author, simulate, compile, and deploy confidential-computation circuits to Base."
+readme = "README.md"
 
 [[bin]]
 name = "glaselvm"
 path = "src/main.rs"
 
 [dependencies]
-glasel-circuit = { path = "../glasel-circuit" }
-glasel-crypto = { path = "../glasel-crypto" }
+glasel-circuit = { path = "../glasel-circuit", version = "0.1.0" }
+glasel-crypto = { path = "../glasel-crypto", version = "0.1.0" }
 alloy = { version = "0.8", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"

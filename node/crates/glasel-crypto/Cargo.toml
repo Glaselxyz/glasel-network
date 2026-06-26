@@ -3,6 +3,11 @@ name = "glasel-crypto"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Glasel Network cryptography: F_p field arithmetic, Rescue-Prime hash/cipher, and X25519 sealing. Byte-compatible with the @glasel/client TypeScript SDK."
 
 [dependencies]
 num-bigint = { workspace = true }
