@@ -1,0 +1,27 @@
+type Computation @entity(immutable: false) {
+  id: Bytes! # computationId
+  mxeId: Bytes!
+  compDefId: Bytes!
+  requester: Bytes
+  status: String! # Requested | Completed | Failed | Challenged | Finalized
+  encInputs: Bytes
+  encResult: Bytes
+  resultCommitment: Bytes
+  callbackSucceeded: Boolean
+  deadline: BigInt
+  requestedAt: BigInt!
+  completedAt: BigInt
+  finalizedAt: BigInt
+  challengedAt: BigInt
+  slashedNodes: [Bytes!]
+  txHash: Bytes!
+}
+
+type ProtocolStat @entity(immutable: false) {
+  id: ID! # "global"
+  requested: BigInt!
+  completed: BigInt!
+  failed: BigInt!
+  challenged: BigInt!
+  finalized: BigInt!
+}

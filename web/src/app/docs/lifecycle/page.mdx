@@ -1,0 +1,86 @@
+export const metadata = {
+  title: "Computation lifecycle",
+  description: "The on-chain state machine from commission to completion or slash.",
+};
+
+# Computation lifecycle
+
+Every job moves through an explicit state machine on the `ComputationCoordinator`.
+Statuses are `None → Pending → InProgress → Completed | Failed | Slashed`.
+
+## Commission
+
+```solidity
+function commission(
+  bytes32 mxeId,
+  bytes32 compDefId,
+  bytes calldata encInputs,
+  string calldata inputIpfsCid,
+  address callbackContract,
+  bytes4 callbackSelector,
+  uint256 callbackGasLimit,
+  uint256 priorityFee
+) external returns (bytes32 computationId);
+```
+
+The Coordinator checks the MXE is active, the definition exists and is allowed,
+and — critically — that the backing **cluster is `Active`**. It then:
+
+- escrows `feeOracle.estimateFee(...) + priorityFee` in `CONFIDE`,
+- computes a deadline from the circuit's gate count,
+- snapshots `cluster.nodes` and `cluster.minThreshold` into the computation,
+- derives a **collision-free** `computationId` from the inputs plus a monotonic nonce,
+- emits `ComputationRequested`.
+
+<Callout type="security" title="Why the nonce?">
+  Without it, two identical commissions in the same block would hash to the same
+  id and the second would overwrite the first, stranding its fee. The monotonic
+  nonce (audit finding C-1) guarantees uniqueness.
+</Callout>
+
+## Submit result
+
+```solidity
+function submitResult(
+  bytes32 computationId,
+  bytes calldata encResult,
+  bytes calldata aggregatedSig,
+  address[] calldata signers
+) external;
+```
+
+The contract requires the job is still open and before its deadline, then checks
+`signers.length >= threshold` and verifies every signature against the
+**snapshotted** participant set via the `ThresholdSig` library. On success it
+stores the result, fires the callback (gas-bounded), settles fees to the signers,
+and records completion. If the callback reverts, the result is held for
+`pullResult`.
+
+## Slash on timeout
+
+```solidity
+function slashTimedOut(bytes32 computationId) external;
+```
+
+After the deadline, anyone can trigger a slash. The Coordinator marks the job
+`Failed`, slashes exactly the **snapshotted participants** for `MissedDeadline`,
+and refunds the fee to the requester.
+
+## State diagram
+
+```text
+            commission()
+   None ───────────────────▶ Pending
+                                │
+                ┌───────────────┼────────────────┐
+       submitResult()      (deadline passes)      │
+                │               │                  │
+                ▼               ▼                  │
+          Completed          slashTimedOut()       │
+        (callback / pull)        │                 │
+                                 ▼                  │
+                              Failed ◀──────────────┘
+```
+
+Continue to the [encryption stack](/docs/encryption) for how inputs and results
+are sealed, or the [SDK reference](/docs/sdk) to drive this from TypeScript.

@@ -1,0 +1,69 @@
+export const metadata = {
+  title: "Circuits (Arcis)",
+  description: "Author, simulate, and deploy confidential circuits with confidevm.",
+};
+
+# Circuits (Arcis)
+
+A **circuit** describes the computation the MPC network runs over encrypted
+inputs. You author it, compile it to a compact arithmetic IR, simulate it
+locally, and deploy it to the on-chain `ComputationRegistry`.
+
+## The model
+
+A circuit is a function over field elements built from a small instruction set —
+add, multiply, subtract, constants, and comparisons — assembled into an
+arithmetic IR. An optimizer folds constants and removes dead nodes; a simulator
+evaluates it locally so you can test without any nodes.
+
+```rust title="order_notional.rs"
+// Compiled by `confidevm compile`. The body runs entirely inside MPC.
+#[confidential]
+fn order_notional(price: u64, quantity: u64) -> u64 {
+    price * quantity
+}
+```
+
+<Callout type="note">
+  Today the Rust builder API stands in for the Arcis procedural-macro frontend.
+  The IR, optimizer, simulator, and binary format are real and exercised by the
+  node — the `#[confidential]` macro sugar is the part still on the roadmap.
+</Callout>
+
+## The confidevm CLI
+
+```bash title="Terminal"
+# list bundled example circuits
+confidevm list
+
+# compile a circuit to the binary IR (+ .abi.json)
+confidevm compile order_notional --out order_notional.bin
+
+# inspect gate count, inputs, and outputs
+confidevm info order_notional.bin
+
+# run it locally over sample inputs (comma-separated) — no nodes needed
+confidevm simulate order_notional --inputs 1000,7
+# → 7000
+
+# estimate the on-chain fee + deadline for a registered definition
+confidevm estimate-fee --comp-def $COMP_DEF --rpc $RPC --fee-oracle $FEE_ORACLE
+
+# deploy the definition to the ComputationRegistry on Base Sepolia
+confidevm deploy-circuit order_notional.bin \
+  --rpc $RPC --private-key $PK --registry $COMPUTATION_REGISTRY
+# → compDefId = 0x…
+```
+
+## From circuit to computation
+
+1. `compile` your circuit to the binary IR.
+2. `deploy-circuit` to get a `compDefId`.
+3. An operator creates an **MXE** binding a cluster to your `compDefId`.
+4. Clients [commission](/docs/lifecycle) computations against that MXE.
+
+The node fetches the bytecode from the `ComputationRegistry` and evaluates it over
+the decrypted-in-cluster inputs — so the gate count you see locally is exactly
+what runs and what you pay for.
+
+Continue to [running a node](/docs/node) to operate the compute side.

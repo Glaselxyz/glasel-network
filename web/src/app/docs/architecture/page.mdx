@@ -1,0 +1,71 @@
+export const metadata = {
+  title: "Architecture",
+  description: "The eight core contracts and the end-to-end data flow.",
+};
+
+# Architecture
+
+Confide is orchestrated by eight UUPS-upgradeable contracts on Base, an off-chain
+Rust node network, and a TypeScript client. The contracts never see plaintext —
+they route encrypted blobs, escrow fees, and verify signatures.
+
+## The contracts
+
+| Contract | Responsibility |
+| --- | --- |
+| `ConfideToken` | `CONFIDE` ERC-20 (votes-enabled) used for staking and fees. |
+| `NodeRegistry` | Node identities: BLS + X25519 keys, attestation, jurisdiction. |
+| `StakingManager` | Self-stake and delegation, rewards, unbonding, slashing. |
+| `ClusterManager` | Cluster proposal, DKG activation, the published cluster key. |
+| `MXEFactory` | MPC execution environments binding a cluster to allowed circuits. |
+| `ComputationRegistry` | Compiled circuit definitions and their metadata. |
+| `FeeOracle` | Fee and deadline pricing from a circuit's gate count. |
+| `ComputationCoordinator` | The lifecycle entrypoint: commission, submit, slash. |
+
+All eight sit behind `ERC1967Proxy` and are UUPS-upgradeable. On the current
+testnet deployment the admin role is held by the deployer; a separate governance
+module — an OpenZeppelin `Governor` plus a `TimelockController` — is built and
+tested, and is the intended owner of the admin/upgrade rights as the network
+decentralizes.
+
+## Data flow
+
+```text
+┌────────────┐   encInputs (sealed)    ┌────────────────────────┐
+│  Client    │ ───────────────────────▶│ ComputationCoordinator │
+│  (SDK)     │   commission(mxeId,…)   │   • snapshot cluster    │
+└────────────┘                         │   • escrow fee          │
+      ▲                                │   • emit Requested      │
+      │ decrypt(result)                └───────────┬────────────┘
+      │                                            │ event
+      │                                            ▼
+┌─────┴───────┐   submitResult(sig[])   ┌────────────────────────┐
+│  arxOS      │ ◀───────────────────────│  arxOS cluster (MPC)    │
+│  cluster    │   threshold-signed      │   • decrypt in-cluster  │
+└─────────────┘                         │   • run circuit         │
+                                        │   • re-seal + sign      │
+                                        └────────────────────────┘
+```
+
+1. The client reads the **cluster key** from `ClusterManager` and seals typed
+   inputs to it.
+2. `commission` escrows the fee, **snapshots the cluster's participants and
+   threshold**, assigns a unique `computationId`, and emits `ComputationRequested`.
+3. Nodes observe the event, decrypt the inputs inside the cluster, evaluate the
+   circuit, re-seal the result to the requester's key, and threshold-sign it.
+4. `submitResult` verifies the signatures against the **snapshot**, marks the job
+   complete, settles fees to the participants, and fires the requester's callback.
+
+## Design choices
+
+- **Snapshot, don't trust the present.** Verification and slashing bind to the
+  cluster membership captured at commission time — so a later migration can't
+  redirect a slash or accept a result from the wrong nodes.
+- **Push with a pull fallback.** Results are delivered via a gas-bounded callback;
+  if it reverts, the requester can `pullResult` later. No result is ever lost.
+- **Threshold-ECDSA today, BLS-ready calldata.** Base lacks the EIP-2537
+  precompiles BLS aggregation needs, so Confide verifies a *set* of ECDSA
+  signatures with identical calldata shape — a drop-in for BLS later.
+
+See the [computation lifecycle](/docs/lifecycle) for the on-chain state machine
+and the [security model](/docs/security) for the trust assumptions.

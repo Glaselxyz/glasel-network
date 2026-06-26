@@ -1,0 +1,38 @@
+import { Deployments } from "@/components/deployments";
+
+export const metadata = {
+  title: "Deployments",
+  description: "Live Confide Network contract addresses on Base Sepolia.",
+};
+
+# Deployments
+
+Confide's core protocol is live on **Base Sepolia** (chainId `84532`). All eight
+contracts are `ERC1967` (UUPS) proxies, deployed and wired in dependency order,
+and exercised end-to-end by an on-chain test suite.
+
+<Deployments />
+
+## Verification
+
+The deployment is exercised by a **23-check** live suite covering the full
+lifecycle plus every audited edge case — id-collision resistance,
+below-threshold and duplicate/non-member signer rejection, access control,
+deadline-floor guards, slashing with a real stake haircut, and commission
+against a dissolved cluster. The full report is in `docs/TESTNET.md`.
+
+<Callout type="tip" title="Point the SDK here">
+  Drop the Coordinator, ClusterManager, and MXEFactory addresses above into your
+  `ConfideClient` config and you're talking to the live network. See the
+  [quickstart](/docs/quickstart).
+</Callout>
+
+## Lifecycle proven on-chain
+
+- Register + stake 3 nodes → propose + threshold-activate a cluster
+- Deploy a circuit definition + create an MXE
+- Commission with sealed inputs → threshold-sign + submit the result
+- SDK reads the cluster key, watches to completion, and decrypts the output
+
+Total gas for the full deploy plus the entire test run was about **0.0017 ETH** at
+Base Sepolia prices.

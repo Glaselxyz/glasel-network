@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  contracts:
+    name: Contracts (Foundry)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
+      # forge FFI tests call the Rust BLS binaries — build them first.
+      - name: Build BLS FFI binaries
+        run: cargo build -p glasel-bls --bins
+        working-directory: node
+      - name: forge build
+        run: forge build
+        working-directory: contracts
+      - name: forge test
+        run: forge test -vvv
+        working-directory: contracts
+
+  rust:
+    name: Node (Rust workspace)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: clippy, rustfmt }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: node }
+      - name: fmt
+        run: cargo fmt --all --check
+        working-directory: node
+      - name: clippy
+        run: cargo clippy --workspace --all-targets
+        continue-on-error: true # surfaced, non-blocking on first CI
+        working-directory: node
+      # MP-SPDZ MASCOT e2e tests skip cleanly when MP-SPDZ isn't built.
+      - name: test
+        run: cargo test --workspace -- --test-threads=1
+        working-directory: node
+
+  sdk:
+    name: SDK (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: install
+        run: bun install --frozen-lockfile
+        working-directory: sdk
+      - name: typecheck
+        run: bun run typecheck
+        working-directory: sdk
+      - name: test
+        run: bun test
+        working-directory: sdk

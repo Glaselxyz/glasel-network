@@ -1,0 +1,35 @@
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Node / SDK / CLI
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Rust
+node/target/
+target/
+
+# Env / secrets
+.env
+.env.*
+*.key
+keystore/
+secrets.env
+# ...but DO commit the templates
+!.env.example
+!**/.env.example
+
+# Local tooling
+.claude/
+
+# OS
+.DS_Store
+*.log
+
+# e2e scratch artifacts
+contracts/*.e2e.*
+contracts/e2e-artifact.json
+node/vendor/

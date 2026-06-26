@@ -1,0 +1,31 @@
+[package]
+name = "glasel-bls"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ark-bn254 = "0.4"
+ark-ec = "0.4"
+ark-ff = "0.4"
+ark-serialize = "0.4"
+ark-std = "0.4"
+num-bigint = { workspace = true }
+num-traits = { workspace = true }
+sha3 = { workspace = true }
+hex = { workspace = true }
+rand = "0.8"
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[[bin]]
+name = "bls-vector"
+path = "src/bin/vector.rs"
+
+[[bin]]
+name = "bls-sign"
+path = "src/bin/sign.rs"
+
+[[bin]]
+name = "bls-dkg"
+path = "src/bin/dkg.rs"

@@ -1,0 +1,109 @@
+export const metadata = {
+  title: "Quickstart",
+  description: "Encrypt a typed value, commission a computation, and decrypt the result.",
+};
+
+# Quickstart
+
+This guide takes you from zero to a verified confidential computation against
+the live Base Sepolia deployment. You'll encrypt a typed value, commission it
+on-chain, and decrypt the threshold-signed result.
+
+## Install
+
+```bash title="Terminal"
+# the TypeScript client
+bun add @confide/client viem
+# or: npm install @confide/client viem
+```
+
+<Callout type="tip">
+  The SDK runs anywhere — Node, Bun, Deno, or the browser. Encryption is pure
+  TypeScript (`@noble/curves`, `@noble/hashes`); the only network dependency is a
+  viem `PublicClient`.
+</Callout>
+
+## 1. Create a client
+
+Point the client at a Base Sepolia RPC and the protocol addresses. The
+Coordinator, ClusterManager, and MXEFactory addresses are on the
+[deployments page](/docs/network).
+
+```ts title="client.ts"
+import { ConfideClient } from "@confide/client";
+import { createPublicClient, http } from "viem";
+import { baseSepolia } from "viem/chains";
+
+export const confide = new ConfideClient({
+  publicClient: createPublicClient({ chain: baseSepolia, transport: http() }),
+  addresses: {
+    coordinator: "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc",
+    clusterManager: "0xFd874609e9913292b3A701C162c29D0595affDAe",
+    mxeFactory: "0x1187f7D55Ea30E5738e84a14E07b288dA9A07DF2",
+  },
+});
+```
+
+## 2. Encrypt typed inputs
+
+Read the cluster's X25519 public key from chain, then seal a typed value to it.
+The `encInputs` blob is what goes on-chain — it reveals nothing.
+
+```ts title="encrypt.ts" {7-11}
+import { ORDER_SCHEMA, generateKeyPair, publicKeyFromPrivate } from "@confide/client";
+import { confide } from "./client";
+
+const me = generateKeyPair(); // your result-decryption keypair
+
+const clusterKey = await confide.getClusterPublicKeyForMXE(mxeId);
+const { encInputs } = confide.encrypt({
+  schema: ORDER_SCHEMA,
+  clusterKey,
+  value: { price: 1000n, quantity: 7n, side: true, buyerKey: publicKeyFromPrivate(me.privateKey) },
+});
+```
+
+## 3. Commission the computation
+
+Commissioning is a normal contract call — your app (or a thin wrapper around the
+Coordinator) submits `encInputs` against an MXE and a computation definition.
+The returned `computationId` is read from the `ComputationRequested` event.
+
+```ts title="commission.ts"
+// `commission(...)` is your contract call to the Coordinator; it returns the
+// computationId emitted in the ComputationRequested event.
+const computationId = await commission(mxeId, compDefId, encInputs);
+```
+
+<Callout type="note" title="Where do mxeId and compDefId come from?">
+  An operator deploys a circuit to the ComputationRegistry (`compDefId`) and
+  creates an MXE binding it to a cluster (`mxeId`). See
+  [Core concepts](/docs/concepts) and [Circuits](/docs/circuits).
+</Callout>
+
+## 4. Wait, then decrypt
+
+The MPC network picks up the job, computes over the ciphertext, re-seals the
+result to your key, and threshold-signs it. The SDK polls until it lands, then
+decrypts locally.
+
+```ts title="result.ts"
+const { success, encResult } = await confide.watchComputation({ computationId });
+if (!success) throw new Error("computation failed or was slashed");
+
+const result = confide.decryptResult({
+  encResult,
+  privateKey: me.privateKey,
+  schema: ORDER_SCHEMA,
+});
+
+console.log(result); // { price: 1000n, quantity: 7n, side: true, ... }
+```
+
+That's the whole loop: **encrypt → commission → compute → verify → decrypt.**
+
+## Next steps
+
+- [SDK reference](/docs/sdk) — every method on `ConfideClient`.
+- [Computation lifecycle](/docs/lifecycle) — what happens on-chain at each step.
+- [Run a node](/docs/node) — operate an arxOS node and join a cluster.

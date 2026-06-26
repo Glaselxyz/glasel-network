@@ -1,0 +1,88 @@
+export const metadata = {
+  title: "Run a node",
+  description: "Operate an arxOS node: register, stake, join a cluster, and serve computations.",
+};
+
+# Run a node
+
+**arxOS** is the Rust daemon node operators run. It watches Base for commissioned
+computations, decrypts inputs inside its cluster, evaluates the circuit,
+re-seals the result, threshold-signs it, and submits it.
+
+## Build
+
+```bash title="Terminal"
+git clone https://github.com/confide-network/confide
+cd confide/node
+cargo build -p arxos --release
+```
+
+## Register & stake
+
+A node needs an on-chain identity in the `NodeRegistry` and stake in the
+`StakingManager` to be eligible for clusters. These are ordinary on-chain
+transactions from the operator key — send them with `cast`, a script, or the SDK:
+
+```bash title="Terminal"
+# 1. register the identity: BLS key, X25519 key, attestation hash, jurisdiction
+cast send $NODE_REGISTRY "registerNode(bytes,bytes32,bytes32,string)" \
+  $BLS_PUBKEY $X25519_PUBKEY $HARDWARE_HASH "US" \
+  --rpc-url $RPC --private-key $NODE_PK
+
+# 2. approve + stake the minimum CONFIDE to become eligible
+cast send $CONFIDE "approve(address,uint256)" $STAKING $AMOUNT --rpc-url $RPC --private-key $NODE_PK
+cast send $STAKING "stake(address,uint256)" $NODE_ADDR $AMOUNT --rpc-url $RPC --private-key $NODE_PK
+```
+
+<Callout type="note">
+  X25519 is the key clients encrypt to; the BLS key is reserved for the eventual
+  aggregate-signature path. Both are registered up front.
+</Callout>
+
+## Configure
+
+arxOS reads a single TOML file. The `[cluster]` key is this node's X25519
+decryption share; the `[signers]` keys produce the threshold signatures (the
+first also funds and sends the `submitResult` transaction).
+
+```toml title="arxos.toml"
+rpc_url          = "https://sepolia.base.org"
+poll_interval_ms = 2000
+start_block      = 0
+
+[contracts]
+coordinator          = "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc"
+cluster_manager      = "0xFd874609e9913292b3A701C162c29D0595affDAe"
+computation_registry = "0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1"
+
+[cluster]
+x25519_private_key = "0x…"   # this node's input-decryption share
+
+[engine]
+recipient_public_key = "0x…" # simulated engine; real MPC replaces engine.rs
+
+[signers]
+keys = ["0x…", "0x…"]        # threshold-signing keys
+```
+
+## Run
+
+```bash title="Terminal"
+# pass the config path (or set ARXOS_CONFIG)
+arxos arxos.toml
+```
+
+The daemon then loops: **listen → schedule → decrypt → compute → sign → submit.**
+It fetches each computation's circuit bytecode from the `ComputationRegistry`,
+evaluates it over the sealed inputs, and submits a threshold-signed result before
+the deadline — or risks being [slashed](/docs/lifecycle#slash-on-timeout).
+
+## Responsibilities
+
+- **Stay live.** Missed deadlines on assigned computations are slashed.
+- **Sign honestly.** Results are only accepted if a threshold of members agree;
+  a node that signs a wrong result is outvoted and can be slashed.
+- **Keep keys safe.** The X25519 key gates input decryption; protect the keystore.
+
+See the [security model](/docs/security) for the trust assumptions around the
+simulated engine.

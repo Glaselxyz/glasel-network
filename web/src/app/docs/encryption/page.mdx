@@ -1,0 +1,77 @@
+export const metadata = {
+  title: "Encryption stack",
+  description: "X25519 ECDH, the Rescue-Prime cipher, typed codecs, and sealing.",
+};
+
+# Encryption stack
+
+Confide's confidentiality rests on one small, auditable encryption stack. It is
+implemented **twice** — TypeScript (`sdk/`) and Rust (`node/crates/confide-crypto`)
+— and proven byte-for-byte identical with cross-language test vectors.
+
+## Field arithmetic
+
+All values live in the prime field `F_p` with `p = 2²⁵⁵ − 19`. Typed inputs are
+encoded to field elements by the [codec](#typed-codecs); the cipher operates on
+these elements directly, which keeps the client, the circuit, and the node
+working in the same algebraic domain.
+
+## Rescue-Prime
+
+The symmetric primitive is a **Rescue-Prime** permutation used in a sponge for
+key derivation and in counter mode for the stream cipher. The round constants are
+derived from keccak and the MDS matrix is a deterministic Cauchy matrix, so both
+implementations agree exactly.
+
+<Callout type="note">
+  Confide's Rescue constants are generated deterministically rather than taken
+  from any published parameter set — what matters here is that the scheme is
+  self-consistent across the TypeScript and Rust stacks, proven by shared vectors.
+</Callout>
+
+## X25519 ECDH
+
+Confidentiality between client and cluster uses **X25519** Diffie–Hellman:
+
+- Each cluster publishes a combined X25519 public key (from its DKG).
+- To encrypt, the client generates an ephemeral keypair, derives a shared secret
+  with the cluster key, and uses it (via the Rescue sponge KDF) to key the cipher.
+- The ciphertext payload carries the ephemeral public key and a nonce, so the
+  cluster can re-derive the same secret and decrypt.
+
+```text
+payload = serialize(
+  ephemeralPublicKey,   // 32 bytes — X25519
+  nonce,                // cipher nonce
+  ciphertext            // Rescue-CTR over the field-encoded plaintext
+)
+```
+
+## Typed codecs
+
+The SDK encodes typed structs to field elements with a schema. For example the
+built-in `ORDER_SCHEMA`:
+
+```ts title="schema.ts"
+import { encodeValues, ORDER_SCHEMA } from "@confide/client";
+
+const elements = encodeValues(ORDER_SCHEMA, {
+  price: 1000n,
+  quantity: 7n,
+  side: true,          // bool → field element
+  buyerKey,            // 32-byte key → field elements
+});
+```
+
+Decoding reverses it after decryption, so results come back as the same typed
+shape you put in.
+
+## Sealing results
+
+Results are **sealed** to a recipient: the node encrypts the output to the
+requester's public key the same way the client encrypted inputs to the cluster.
+Only the holder of the matching private key can read the result — not the chain,
+and not the nodes after they hand it back.
+
+See the [security model](/docs/security) for how this composes into the protocol's
+trust guarantees.

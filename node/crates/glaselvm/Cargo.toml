@@ -1,0 +1,21 @@
+[package]
+name = "glaselvm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "glaselvm"
+path = "src/main.rs"
+
+[dependencies]
+glasel-circuit = { path = "../glasel-circuit" }
+glasel-crypto = { path = "../glasel-crypto" }
+alloy = { version = "0.8", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+hex = { workspace = true }
+num-bigint = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = "0.8"

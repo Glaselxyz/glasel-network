@@ -1,0 +1,26 @@
+# systemd unit for an GlaselOS node. Install to /etc/systemd/system/glaseld.service,
+# then: systemctl daemon-reload && systemctl enable --now glaseld
+[Unit]
+Description=GlaselOS node daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=glaseld
+Group=glaseld
+Environment=GLASELD_CONFIG=/etc/glaseld/glaseld.toml
+# Secrets via env: references in glaseld.toml resolve from this file (chmod 600).
+EnvironmentFile=-/etc/glaseld/secrets.env
+ExecStart=/usr/local/bin/glaseld
+Restart=on-failure
+RestartSec=5
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/glaseld
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

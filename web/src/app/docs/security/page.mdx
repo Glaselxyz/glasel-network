@@ -1,0 +1,69 @@
+export const metadata = {
+  title: "Security model",
+  description: "Trust assumptions, the threat model, and the audit findings.",
+};
+
+# Security model
+
+This page is deliberately blunt about what Confide guarantees today and what it
+does not. Read it before putting anything sensitive on the network.
+
+## What is trust-minimized
+
+- **Input confidentiality.** Inputs are encrypted on the client to the cluster
+  key. They are never posted in the clear and are decrypted only inside the
+  cluster's MPC.
+- **Result authenticity.** A result is accepted on-chain only if a **threshold**
+  of the cluster's commission-time members signed it. The verification binds to
+  the snapshot, not the current membership.
+- **Economic accountability.** Nodes stake `CONFIDE`. Missed deadlines and
+  misbehaviour are slashed against the exact assigned participants, including
+  stake that is mid-unbonding.
+
+## What is not (yet)
+
+<Callout type="warning" title="Research preview — simulated MPC">
+  The node's MPC engine currently runs as a single process holding the
+  DKG-combined key. That process *can* see plaintext. Real Cerberus/Manticore MPC
+  replaces only `engine.rs` — the rest of the protocol is unchanged — but until
+  then, do not treat input privacy as trustless against a malicious operator.
+</Callout>
+
+- **Threshold ECDSA, not BLS.** Confide verifies a set of ECDSA signatures rather
+  than a single aggregated BLS signature, because Base lacks the EIP-2537
+  precompiles. Equally secure, higher gas; identical calldata shape.
+- **No `__gap` storage reserves.** Upgradeable contracts don't yet reserve
+  namespaced storage (audit L-3, acknowledged) — relevant only to future upgrades.
+
+## Threat model highlights
+
+- A minority of malicious nodes cannot forge a result (threshold signatures) nor
+  decrypt alone (DKG-shared key).
+- A migrating cluster cannot redirect a slash or smuggle in a result from
+  non-assigned nodes — verification and slashing use the **commission-time
+  snapshot**.
+- A requester cannot grief nodes for free — fees are escrowed up front and only
+  refunded on a genuine timeout.
+
+## Audit
+
+An independent review pass plus maintainer review produced the following. All
+material findings are fixed with regression tests; the report lives in
+`docs/AUDIT.md`.
+
+| ID | Severity | Finding | Status |
+| --- | --- | --- | --- |
+| C-1 | Critical | Same-block `commission` id collision strands fees | ✅ Fixed |
+| H-1 | High | Jobs accepted against non-active clusters | ✅ Fixed |
+| H-2 | High | Slashing/verification used mutable, not snapshot, membership | ✅ Fixed |
+| H-3 | High | Slashing evadable via `initiateUnstake` front-run | ✅ Fixed |
+| M-1 | Medium | `pullResult` missing `nonReentrant` | ✅ Fixed |
+| M-2 | Medium | Unbounded cluster size → gas-DoS | ✅ Fixed |
+| M-3 | Medium | `FeeOracle` deadline floor could be 0 | ✅ Fixed |
+| L-1 | Low | `ThresholdSig` zero-address belt-and-suspenders | ✅ Fixed |
+| L-2 | Info | `ConfidentialBase` consumer footguns | Acknowledged |
+| L-3 | Info | No `__gap` storage reserves | Acknowledged |
+
+Every fix is exercised by both the Foundry suite (86 tests) and the
+[live testnet suite](/docs/network) (23 on-chain checks), so the invariants are
+verified against a real network, not just locally.

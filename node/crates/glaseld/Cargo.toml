@@ -1,0 +1,26 @@
+[package]
+name = "glaseld"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "glaseld"
+path = "src/main.rs"
+
+[dependencies]
+glasel-crypto = { path = "../glasel-crypto" }
+glasel-circuit = { path = "../glasel-circuit" }
+glasel-mpc = { path = "../glasel-mpc" }
+glasel-bls = { path = "../glasel-bls" }
+rand = "0.8"
+alloy = { version = "0.8", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+toml = "0.8"
+serde = { workspace = true }
+hex = { workspace = true }
+num-bigint = { workspace = true }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }

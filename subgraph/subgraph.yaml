@@ -1,0 +1,35 @@
+specVersion: 1.0.0
+description: Glasel Network — computation lifecycle indexer
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ComputationCoordinator
+    network: base-sepolia
+    source:
+      # C-hardened deployment (docs/TESTNET.md). Update on redeploy.
+      address: "0x8Da86E718964678f1Fd04467D3d7bc4B5A439A74"
+      abi: ComputationCoordinator
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities:
+        - Computation
+        - ProtocolStat
+      abis:
+        - name: ComputationCoordinator
+          file: ./abis/ComputationCoordinator.json
+      eventHandlers:
+        - event: ComputationRequested(indexed bytes32,indexed bytes32,indexed bytes32,bytes,string,uint64)
+          handler: handleRequested
+        - event: ComputationCompleted(indexed bytes32,bytes32,bool)
+          handler: handleCompleted
+        - event: ComputationFailed(indexed bytes32,string)
+          handler: handleFailed
+        - event: ComputationChallenged(indexed bytes32,address[])
+          handler: handleChallenged
+        - event: ComputationFinalized(indexed bytes32)
+          handler: handleFinalized

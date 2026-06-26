@@ -1,0 +1,70 @@
+export const metadata = {
+  title: "Core concepts",
+  description: "Nodes, clusters, MXEs, computation definitions, and computations.",
+};
+
+# Core concepts
+
+Five primitives make up the protocol. Understanding how they nest is enough to
+read the rest of the docs.
+
+## Nodes
+
+A **node** (arxOS) is an off-chain operator that performs MPC. Each node
+registers an identity in the `NodeRegistry` — a BLS public key (for the eventual
+aggregate-signature path), an **X25519 public key** (for input decryption), a
+hardware-attestation hash, and a jurisdiction. Nodes stake `CONFIDE` through the
+`StakingManager` to become eligible.
+
+## Clusters
+
+A **cluster** is a set of nodes that jointly hold one **distributed key**. During
+formation the members run a DKG; the combined X25519 public key is published
+on-chain via `ClusterManager.activateCluster`, gated by a threshold of member
+signatures. Clients encrypt to this cluster key; no single node can decrypt
+alone.
+
+A cluster has a **threshold** `t` — the minimum number of members that must
+sign a result for it to be accepted on-chain.
+
+<Callout type="note">
+  Clusters are capped at 64 nodes (`MAX_CLUSTER_NODES`) to bound on-chain
+  verification gas — a fix from the [security audit](/docs/security).
+</Callout>
+
+## Computation definitions
+
+A **computation definition** (`compDefId`) is a compiled circuit registered in the
+`ComputationRegistry`. It carries the circuit bytecode (or an IPFS pointer), an
+estimated gate count used for fee and deadline pricing, and an input arity. This
+is what the [Arcis compiler](/docs/circuits) produces.
+
+## MXEs
+
+An **MXE** (MPC Execution Environment) binds a cluster to a set of allowed
+computation definitions. Think of it as a deployment target: it says *"this
+cluster will run these circuits."* Clients commission against an `mxeId`; the
+Coordinator resolves it to the backing cluster and snapshots that cluster's
+members and threshold at commission time.
+
+## Computations
+
+A **computation** is one commissioned job. Its lifecycle:
+
+- `commission` — the requester deposits a fee and submits encrypted inputs. The
+  Coordinator snapshots the cluster's participants and threshold and assigns a
+  unique `computationId`.
+- `submitResult` — a threshold of nodes submits the sealed result plus their
+  signatures; the contract verifies them against the snapshot and fires the
+  requester's callback.
+- `slashTimedOut` — if the deadline passes with no result, the assigned
+  participants are slashed and the fee is refunded.
+
+```text
+Node ─stakes→ Cluster ─backs→ MXE ─runs→ Computation Definition
+                                   │
+                            Computation (a job)
+```
+
+Continue to the [architecture](/docs/architecture) for how the contracts wire
+these together, or the [lifecycle](/docs/lifecycle) for the end-to-end flow.

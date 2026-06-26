@@ -1,0 +1,105 @@
+export const metadata = {
+  title: "SDK reference",
+  description: "The @confide/client API: ConfideClient, encryption, and codecs.",
+};
+
+# SDK reference
+
+`@confide/client` is the TypeScript client. It wraps a viem `PublicClient`,
+handles the encryption stack, and exposes a small typed surface.
+
+## ConfideClient
+
+```ts
+new ConfideClient({
+  publicClient,                       // viem PublicClient
+  addresses: { coordinator, clusterManager, mxeFactory? },
+});
+```
+
+### getClusterPublicKey
+
+```ts
+getClusterPublicKey(clusterId: Hex): Promise<Uint8Array>
+```
+
+Reads the combined 32-byte X25519 public key for a cluster from
+`ClusterManager.clusterPubKey`.
+
+### getClusterPublicKeyForMXE
+
+```ts
+getClusterPublicKeyForMXE(mxeId: Hex): Promise<Uint8Array>
+```
+
+Resolves an MXE to its backing cluster and returns that cluster's key. Requires
+the `mxeFactory` address to be configured.
+
+### encrypt
+
+```ts
+encrypt(params: {
+  schema: Schema;
+  value: Record<string, FieldValue>;
+  clusterKey: Uint8Array;
+  nonce?: Uint8Array;
+}): { encInputs: Hex; ephemeralPublicKey: Uint8Array; nonce: Uint8Array }
+```
+
+Encodes a typed value to field elements and seals it to `clusterKey`. The
+`encInputs` blob is what you submit on-chain.
+
+### watchComputation
+
+```ts
+watchComputation(params: {
+  computationId: Hex;
+  timeoutMs?: number;   // default 120_000
+  pollMs?: number;      // default 1_000
+}): Promise<{ success: boolean; status: ComputationStatus; encResult: Hex }>
+```
+
+Polls `getComputation` until the job reaches `Completed` (success) or
+`Failed`/`Slashed` (failure), or throws on timeout.
+
+### decryptResult
+
+```ts
+decryptResult(params: {
+  encResult: Hex;
+  privateKey: Uint8Array;
+  schema: Schema;
+}): Record<string, FieldValue>
+```
+
+Decrypts a result that was sealed to your `privateKey` and decodes it back to the
+typed shape described by `schema`.
+
+## Encryption primitives
+
+The same module also exports the lower-level stack, so you can use it standalone:
+
+```ts
+import {
+  generateKeyPair, publicKeyFromPrivate,   // x25519
+  encrypt, decrypt, seal,                   // crypto
+  encodeValues, decodeValues, ORDER_SCHEMA, // codec
+  serializePayload, deserializePayload,     // wire format
+} from "@confide/client";
+```
+
+## Types
+
+```ts
+interface ConfideAddresses {
+  coordinator: Hex;
+  clusterManager: Hex;
+  mxeFactory?: Hex;
+}
+
+enum ComputationStatus {
+  None, Pending, InProgress, Completed, Failed, Slashed,
+}
+```
+
+See the [quickstart](/docs/quickstart) for these wired together end-to-end.
