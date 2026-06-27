@@ -4,9 +4,13 @@
  * POST { address } -> mints FAUCET_AMOUNT GLASEL to the address (rate-limited per
  * address per 24h). Requires the operator to set env in the deployment:
  *
- *   FAUCET_PRIVATE_KEY   a key holding MINTER_ROLE on GlaselToken (server-only)
- *   RPC_URL              Base Sepolia RPC (optional; defaults to public)
- *   FAUCET_AMOUNT        GLASEL per claim, in whole tokens (optional; default 1000)
+ *   FAUCET_PRIVATE_KEY        a key holding MINTER_ROLE on GlaselToken (server-only)
+ *   RPC_URL                   Base Sepolia RPC (optional; defaults to public)
+ *   FAUCET_AMOUNT             GLASEL per claim, whole tokens (optional; default 1000, capped 100k)
+ *   FAUCET_MAX_CLAIMS_PER_DAY global daily ceiling (optional; default 500)
+ *
+ * Abuse controls: per-recipient AND per-IP 24h rate limit + a global daily cap, so
+ * an attacker cannot drain the faucet wallet's gas by rotating recipient addresses.
  *
  * Without FAUCET_PRIVATE_KEY the endpoint returns 503 so the site still builds and
  * deploys; the operator flips it on by setting the env var.
@@ -32,10 +36,28 @@ const tokenAbi = [
 ] as const;
 
 const RATE_WINDOW_MS = 24 * 60 * 60 * 1000;
-const lastClaim = new Map<string, number>();
+// Per recipient address AND per source IP, so an attacker can't drain the faucet
+// wallet's gas by rotating recipient addresses. Plus a global daily ceiling.
+const lastClaimByAddress = new Map<string, number>();
+const lastClaimByIp = new Map<string, number>();
+const MAX_CLAIMS_PER_DAY = Number(process.env.FAUCET_MAX_CLAIMS_PER_DAY || "500");
+const MAX_AMOUNT_WHOLE = 100_000n; // sanity cap on a misconfigured FAUCET_AMOUNT
+let dayKey = "";
+let dayCount = 0;
 
 function rpcUrl(): string {
   return process.env.RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || defaultRpcUrl;
+}
+
+/** Drop entries older than the window so the maps don't grow unbounded. */
+function evictStale(map: Map<string, number>, now: number) {
+  for (const [k, t] of map) if (now - t >= RATE_WINDOW_MS) map.delete(k);
+}
+
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]!.trim();
+  return req.headers.get("x-real-ip") || "unknown";
 }
 
 export async function POST(req: Request) {
@@ -59,18 +81,43 @@ export async function POST(req: Request) {
     );
   }
 
-  // Rate limit per recipient address.
   const now = Date.now();
-  const prev = lastClaim.get(address.toLowerCase());
-  if (prev && now - prev < RATE_WINDOW_MS) {
-    const hrs = Math.ceil((RATE_WINDOW_MS - (now - prev)) / 3_600_000);
+  const addrKey = address.toLowerCase();
+  const ip = clientIp(req);
+  evictStale(lastClaimByAddress, now);
+  evictStale(lastClaimByIp, now);
+
+  // Global daily ceiling — bounds total gas the faucet wallet can be made to spend,
+  // even by an attacker rotating recipient addresses and source IPs.
+  const today = new Date(now).toISOString().slice(0, 10);
+  if (today !== dayKey) { dayKey = today; dayCount = 0; }
+  if (dayCount >= MAX_CLAIMS_PER_DAY) {
     return NextResponse.json(
-      { error: `already claimed — try again in ~${hrs}h (one claim per address per day)` },
+      { error: "faucet daily limit reached — try again tomorrow" },
       { status: 429 },
     );
   }
 
-  const amountWhole = BigInt(process.env.FAUCET_AMOUNT || "1000");
+  // Per recipient address AND per source IP.
+  const tooSoon = (prev?: number) => prev !== undefined && now - prev < RATE_WINDOW_MS;
+  const hrsLeft = (prev: number) => Math.ceil((RATE_WINDOW_MS - (now - prev)) / 3_600_000);
+  const prevAddr = lastClaimByAddress.get(addrKey);
+  if (tooSoon(prevAddr)) {
+    return NextResponse.json(
+      { error: `already claimed — try again in ~${hrsLeft(prevAddr!)}h (one claim per address per day)` },
+      { status: 429 },
+    );
+  }
+  const prevIp = lastClaimByIp.get(ip);
+  if (ip !== "unknown" && tooSoon(prevIp)) {
+    return NextResponse.json(
+      { error: `already claimed from this network — try again in ~${hrsLeft(prevIp!)}h` },
+      { status: 429 },
+    );
+  }
+
+  let amountWhole = BigInt(process.env.FAUCET_AMOUNT || "1000");
+  if (amountWhole > MAX_AMOUNT_WHOLE) amountWhole = MAX_AMOUNT_WHOLE;
   const amount = parseEther(amountWhole.toString());
 
   try {
@@ -99,7 +146,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "mint transaction reverted", txHash: hash }, { status: 502 });
     }
 
-    lastClaim.set(address.toLowerCase(), now);
+    lastClaimByAddress.set(addrKey, now);
+    if (ip !== "unknown") lastClaimByIp.set(ip, now);
+    dayCount++;
     const bal = await publicClient.readContract({ address: token, abi: tokenAbi, functionName: "balanceOf", args: [address as Address] });
     return NextResponse.json({
       ok: true,
