@@ -15,17 +15,33 @@ export const site = {
 
 export type ContractRow = { name: string; address: string; note: string };
 
-/** Live deployment — Base Sepolia (chainId 84532). See docs/TESTNET.md. */
+/** Live deployment — Base Sepolia (chainId 84532). See docs/COMPATIBILITY.md. */
 export const contracts: ContractRow[] = [
-  { name: "ComputationCoordinator", address: "0x8Da86E718964678f1Fd04467D3d7bc4B5A439A74", note: "Lifecycle orchestrator" },
-  { name: "ConfideToken", address: "0x4550C5C3A5Ce9e62b09F956Ae895D5B931493Bd9", note: "CONFIDE — stake & fees" },
-  { name: "StakingManager", address: "0xC320Dd6bAEc75D5D095DcE3008C848416B557ebf", note: "Stake, rewards, slashing" },
-  { name: "ClusterManager", address: "0xeD336A97691Cdba986383eD1BAA942F49254CcBe", note: "Cluster formation & keys" },
-  { name: "NodeRegistry", address: "0x585ef27873E278A235C227d504744F0FbF65b13A", note: "arxOS node identities" },
-  { name: "MXEFactory", address: "0x102fB9E05A5b61C0C654ff58B2d9F92f3a7bdE46", note: "MPC execution environments" },
-  { name: "ComputationRegistry", address: "0x611CbA595EA91E141a5292FD973Ef87c195afE3B", note: "Circuit definitions" },
-  { name: "FeeOracle", address: "0xe07808DC4608d4F45cbE01667c9b69Af2dC7932C", note: "Fee & deadline pricing" },
+  { name: "ComputationCoordinator", address: "0x1FbB367715D26F752357dc7ee60b957CB40d8452", note: "Lifecycle orchestrator" },
+  { name: "GlaselToken", address: "0xa9E29104Fa0287db5bb5BB048a729C93f746b09C", note: "GLASEL — stake & fees" },
+  { name: "StakingManager", address: "0x957100d7a9B2E85958D8e1Be503977b2b1D8a01A", note: "Stake, rewards, slashing" },
+  { name: "ClusterManager", address: "0x875975030Ea94dDbEacfb5fcb9dAeaD4dC70A523", note: "Cluster formation & keys" },
+  { name: "NodeRegistry", address: "0xBA585F1f16b57e1443B1EA01143aa56D3fe432e0", note: "glaseld node identities" },
+  { name: "MXEFactory", address: "0x7CE839Eea76EA1F2F808E4c831a0910A23425f30", note: "MPC execution environments" },
+  { name: "ComputationRegistry", address: "0x359e6fd81BD1EAE7F4ae7a7Fdc29b1986f679F72", note: "Circuit definitions" },
+  { name: "FeeOracle", address: "0x0d3cCA64CaAC0b9c1CBaE9420898A33d8b3615Fc", note: "Fee & deadline pricing" },
 ];
+
+/** Named address lookups for app routes (faucet, status). Single source of truth. */
+export const addresses = {
+  coordinator: "0x1FbB367715D26F752357dc7ee60b957CB40d8452",
+  token: "0xa9E29104Fa0287db5bb5BB048a729C93f746b09C",
+  staking: "0x957100d7a9B2E85958D8e1Be503977b2b1D8a01A",
+  clusterManager: "0x875975030Ea94dDbEacfb5fcb9dAeaD4dC70A523",
+  registry: "0xBA585F1f16b57e1443B1EA01143aa56D3fe432e0",
+} as const;
+
+/** Live operator cluster on Base Sepolia (see docs/COMPATIBILITY.md). */
+export const clusterId =
+  "0xdcc20d23e53232465d569e2498bb798a6f7e3b54b5f9d16ad2b0b0d2ba1eefe2";
+
+/** Default public RPC; override with NEXT_PUBLIC_RPC_URL / RPC_URL (see docs/RPC.md). */
+export const defaultRpcUrl = "https://sepolia.base.org";
 
 export type NavItem = { title: string; href: string };
 export type NavGroup = { title: string; items: NavItem[] };

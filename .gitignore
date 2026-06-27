@@ -7,6 +7,7 @@ contracts/broadcast/
 node_modules/
 dist/
 *.tsbuildinfo
+docs-api/
 
 # Rust
 node/target/

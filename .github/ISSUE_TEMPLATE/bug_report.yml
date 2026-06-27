@@ -1,0 +1,52 @@
+name: Bug report
+description: Something in the SDK, CLI, node, or contracts isn't working as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Glasel. For general "how do I…" questions, please use
+        [Discussions](https://github.com/Glaselxyz/glasel-network/discussions) instead.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - "SDK (@glasel/client)"
+        - "CLI (glaselvm)"
+        - "Node (glaseld)"
+        - "Contracts"
+        - "Docs"
+        - "Other / not sure"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: SDK/CLI version, image tag, or commit SHA.
+      placeholder: "@glasel/client@0.2.0 / glaselvm v0.1.0 / commit abc1234"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected vs what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A minimal sequence (commands, code, or a computationId on Base Sepolia) that reproduces it.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Node/Bun version, network (Base Sepolia), relevant addresses.
+    validations:
+      required: false

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "tsconfig": "tsconfig.build.json",
+  "out": "docs-api",
+  "name": "@glasel/client",
+  "readme": "README.md",
+  "includeVersion": true,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "githubPages": false,
+  "navigationLinks": {
+    "GitHub": "https://github.com/Glaselxyz/glasel-network",
+    "Docs": "https://github.com/Glaselxyz/glasel-network/tree/main/docs"
+  }
+}
