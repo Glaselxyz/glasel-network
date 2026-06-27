@@ -1,0 +1,63 @@
+# Publish the @glasel/client SDK to npm.
+# Trigger: push a tag like `sdk-v0.2.0` (or run manually with the version).
+#
+#   git tag sdk-v0.2.0 && git push origin sdk-v0.2.0
+#
+# Requires a repo secret `NPM_TOKEN` — a npm **Granular Access Token** with
+# "bypass 2FA" enabled and write access to the @glasel scope (account 2FA-on-publish
+# rejects classic tokens with 403). Add it under Settings → Secrets → Actions.
+name: publish-sdk
+
+on:
+  push:
+    tags: ["sdk-v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. sdk-v0.2.0). Must match sdk/package.json version."
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: publish @glasel/client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install deps
+        working-directory: sdk
+        run: npm install --no-audit --no-fund
+
+      - name: Guard — tag version must match package.json
+        working-directory: sdk
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          TAG_VERSION="${TAG#sdk-v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG_VERSION package.json=$PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag version ($TAG_VERSION) != sdk/package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Build (tsc -> dist/)
+        working-directory: sdk
+        run: npm run build
+
+      - name: Publish to npm
+        working-directory: sdk
+        # `npm publish` re-runs prepublishOnly (build). Re-publishing an existing
+        # version 403s — bump sdk/package.json + retag for each release.
+        # (No --provenance: that needs id-token:write + a public repo.)
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
