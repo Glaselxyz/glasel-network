@@ -1,6 +1,6 @@
 {
   "name": "@glasel/client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript client SDK for the Glasel Network — confidential computing on Base. X25519 + Rescue encryption and computation lifecycle helpers.",
   "license": "MIT",
   "type": "module",

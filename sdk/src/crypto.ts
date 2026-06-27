@@ -28,6 +28,17 @@ function randomNonce(): Uint8Array {
 }
 
 /**
+ * Encode a 32-byte X25519 public key as two field elements (high 16 bytes, low
+ * 16 bytes). Carried as the first two elements of sealed computation inputs so a
+ * node can re-seal the result to the requester. Mirrors the Rust
+ * `glasel_crypto::pubkey_to_field_pair`.
+ */
+export function pubkeyToFieldPair(pk: Uint8Array): [bigint, bigint] {
+  if (pk.length !== 32) throw new Error("public key must be 32 bytes");
+  return [bytesToNumberBE(pk.slice(0, 16)), bytesToNumberBE(pk.slice(16, 32))];
+}
+
+/**
  * Encrypt plaintext field elements to `recipientPublicKey`.
  * @param nonce optional 16-byte nonce (defaults to random); pass for determinism in tests.
  */

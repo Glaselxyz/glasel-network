@@ -32,6 +32,31 @@ pub fn generate_keypair() -> ([u8; 32], [u8; 32]) {
     (secret.to_bytes(), public.to_bytes())
 }
 
+/// Encode a 32-byte X25519 public key as two field elements: the high 16 bytes
+/// and the low 16 bytes. Each half is < 2^128 < p, so both are valid field
+/// elements and the mapping is exact and reversible. Used to carry a result
+/// recipient's key inside the sealed computation inputs, so the node can re-seal
+/// the result to whoever requested it.
+pub fn pubkey_to_field_pair(pk: &[u8; 32]) -> [BigUint; 2] {
+    [
+        BigUint::from_bytes_be(&pk[..16]),
+        BigUint::from_bytes_be(&pk[16..]),
+    ]
+}
+
+/// Inverse of [`pubkey_to_field_pair`]: rebuild the 32-byte key from its two
+/// 16-byte halves (right-aligned big-endian).
+pub fn field_pair_to_pubkey(hi: &BigUint, lo: &BigUint) -> [u8; 32] {
+    let mut out = [0u8; 32];
+    let h = hi.to_bytes_be();
+    let l = lo.to_bytes_be();
+    let h = &h[h.len().saturating_sub(16)..];
+    let l = &l[l.len().saturating_sub(16)..];
+    out[16 - h.len()..16].copy_from_slice(h);
+    out[32 - l.len()..32].copy_from_slice(l);
+    out
+}
+
 /// Encrypt plaintext field elements to a recipient public key (random ephemeral).
 pub fn encrypt(plaintext: &[BigUint], recipient_public: &[u8; 32]) -> Payload {
     let mut nonce = [0u8; 16];

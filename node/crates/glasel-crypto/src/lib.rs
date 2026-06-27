@@ -8,6 +8,7 @@ pub mod field;
 pub mod rescue;
 
 pub use crypto::{
-    decrypt, deserialize_payload, encrypt, generate_keypair, public_key_from_private, seal,
-    serialize_payload, shared_secret_fe, Payload,
+    decrypt, deserialize_payload, encrypt, field_pair_to_pubkey, generate_keypair,
+    public_key_from_private, pubkey_to_field_pair, seal, serialize_payload, shared_secret_fe,
+    Payload,
 };

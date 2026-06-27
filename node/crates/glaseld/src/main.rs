@@ -41,10 +41,16 @@ async fn main() -> anyhow::Result<()> {
         warn!("node secrets are inlined in {path}; use env:/file: references in production");
     }
 
-    // Secrets resolved via env:/file: (or inline). Recipient key is public.
+    // Secrets resolved via env:/file: (or inline). The single-process engine
+    // seals each result to the per-job requester key carried in the sealed inputs.
     let cluster_key = hex32(&config::resolve_secret(&cfg.cluster.x25519_private_key)?)?;
-    let recipient_key = hex32(&cfg.engine.recipient_public_key)?;
-    let engine = Engine::new(cluster_key, recipient_key);
+    let engine = Engine::new(cluster_key);
+    // Fallback recipient for the (non-default) BGW/MASCOT paths; zero if unset.
+    let recipient_key = if cfg.engine.recipient_public_key.is_empty() {
+        [0u8; 32]
+    } else {
+        hex32(&cfg.engine.recipient_public_key)?
+    };
     // When [mpc] is configured, computations run as a real BGW session over the
     // authenticated, encrypted mesh; otherwise the single-process engine is used.
     let mpc_session = cfg.mpc.clone().map(|m| {

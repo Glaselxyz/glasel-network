@@ -18,7 +18,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import { generateKeyPair, publicKeyFromPrivate } from "../src/x25519.js";
 import { encodeValues, serializePayload, ORDER_SCHEMA } from "../src/codec.js";
-import { encrypt } from "../src/crypto.js";
+import { encrypt, pubkeyToFieldPair } from "../src/crypto.js";
 import { GlaselClient } from "../src/client.js";
 import { tokenAbi, registryAbi, stakingAbi, clusterAbi, mxeAbi, compRegAbi, coordWriteAbi } from "./e2e-abi.js";
 
@@ -56,7 +56,10 @@ async function main() {
     side: false,
     buyerKey: bytesToHex(publicKeyFromPrivate(recipient.privateKey)),
   };
-  const encInputs = serializePayload(encrypt(encodeValues(ORDER_SCHEMA, order), cluster.publicKey));
+  // Per-job recipient sealing: the requester's pubkey rides as the first two
+  // field elements; the node peels them off and seals the result back to it.
+  const plaintext = [...pubkeyToFieldPair(recipient.publicKey), ...encodeValues(ORDER_SCHEMA, order)];
+  const encInputs = serializePayload(encrypt(plaintext, cluster.publicKey));
   const clusterPub = bytesToHex(cluster.publicKey) as Hex;
 
   console.log("starting anvil…");

@@ -104,9 +104,13 @@ pub struct Cluster {
     pub bls_group_secret: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Engine {
-    /// The simulated circuit re-seals its result to this recipient X25519 key.
+    /// Optional fallback recipient key for the BGW/MASCOT paths. The default
+    /// single-process engine ignores this and seals each result to the per-job
+    /// recipient key carried inside the sealed inputs (so any developer can
+    /// decrypt their own result). Defaults to the zero key when omitted.
+    #[serde(default)]
     pub recipient_public_key: String,
 }
 

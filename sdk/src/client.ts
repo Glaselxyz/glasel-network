@@ -4,7 +4,7 @@
  * completion, and decrypts results.
  */
 import { hexToBytes, parseAbiItem, type Hex, type PublicClient } from "viem";
-import { encrypt as cryptoEncrypt, decrypt as cryptoDecrypt } from "./crypto.js";
+import { encrypt as cryptoEncrypt, decrypt as cryptoDecrypt, pubkeyToFieldPair } from "./crypto.js";
 import {
   encodeValues,
   decodeValues,
@@ -75,14 +75,26 @@ export class GlaselClient {
     return this.getClusterPublicKey(mxe.clusterId);
   }
 
-  /** Encrypt a typed value to the cluster key, producing on-chain `encInputs`. */
+  /**
+   * Encrypt a typed value to the cluster key, producing on-chain `encInputs`.
+   *
+   * Pass `recipientPublicKey` (your own X25519 public key) so the node seals the
+   * result back to you and only you can decrypt it — it is prepended to the
+   * inputs as two field elements, which the node strips off before evaluating the
+   * circuit. This is required for the live network; omit it only for tests that
+   * model the node themselves.
+   */
   encrypt(params: {
     schema: Schema;
     value: Record<string, FieldValue>;
     clusterKey: Uint8Array;
+    recipientPublicKey?: Uint8Array;
     nonce?: Uint8Array;
   }): EncryptResult {
-    const plaintext = encodeValues(params.schema, params.value);
+    const encoded = encodeValues(params.schema, params.value);
+    const plaintext = params.recipientPublicKey
+      ? [...pubkeyToFieldPair(params.recipientPublicKey), ...encoded]
+      : encoded;
     const payload = cryptoEncrypt(plaintext, params.clusterKey, params.nonce);
     return {
       encInputs: serializePayload(payload),

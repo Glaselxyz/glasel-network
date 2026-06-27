@@ -18,6 +18,11 @@ target/
 *.key
 keystore/
 secrets.env
+# Live cluster bring-up artifacts (contain node/cluster private keys)
+golive-state.json
+glaseld.golive.toml
+*.golive.bin
+*.golive.bin.abi.json
 # ...but DO commit the templates
 !.env.example
 !**/.env.example
