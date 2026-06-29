@@ -43,3 +43,6 @@ node/vendor/
 
 # npm auth
 .npmrc
+
+# Vercel
+.vercel
