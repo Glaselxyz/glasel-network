@@ -14,6 +14,7 @@ mod retry;
 mod scheduler;
 mod signer;
 
+use alloy::primitives::B256;
 use crate::chain::Chain;
 use crate::config::{hex32, Config};
 use crate::engine::Engine;
@@ -101,6 +102,27 @@ async fn main() -> anyhow::Result<()> {
     info!("BLS group key: {:?}", signer.group_pubkey());
     let mut from = cfg.start_block;
 
+    // Bounded retry: a transient failure (RPC blip, a mesh peer briefly down) re-
+    // enqueues the task instead of dropping it; after MAX_ATTEMPTS we give up.
+    const MAX_ATTEMPTS: u32 = 3;
+    let mut attempts: std::collections::HashMap<B256, u32> = std::collections::HashMap::new();
+    // Only the submitter holds the cluster key, so only it can fall back to the
+    // local engine when the distributed backend (BGW mesh / MASCOT) is unavailable.
+    let is_submitter = cfg.mpc.as_ref().map(|m| m.submitter).unwrap_or(true);
+    let distributed = malicious.is_some() || mpc_session.is_some();
+    macro_rules! retry_or_drop {
+        ($task:expr, $attempt:expr, $id:expr) => {{
+            if $attempt < MAX_ATTEMPTS {
+                scheduler.enqueue($task);
+            } else {
+                warn!("giving up on {} after {} attempts", $id, $attempt);
+                attempts.remove(&$id);
+                Metrics::inc(&metrics.failed);
+            }
+            continue;
+        }};
+    }
+
     loop {
         let latest = match chain.latest_block().await {
             Ok(b) => b,
@@ -124,41 +146,58 @@ async fn main() -> anyhow::Result<()> {
         }
 
         while let Some(task) = scheduler.next() {
-            info!("computing {}", task.computation_id);
+            let id = task.computation_id;
+            let attempt = {
+                let c = attempts.entry(id).or_insert(0);
+                *c += 1;
+                *c
+            };
+            info!("computing {id} (attempt {attempt}/{MAX_ATTEMPTS})");
             Metrics::inc(&metrics.seen);
             let bytecode = match chain.circuit_bytecode(task.comp_def_id).await {
                 Ok(b) => b,
                 Err(e) => {
-                    warn!("fetch circuit failed for {}: {e}", task.computation_id);
-                    Metrics::inc(&metrics.failed);
-                    continue;
+                    warn!("fetch circuit failed for {id}: {e}");
+                    retry_or_drop!(task, attempt, id);
                 }
             };
-            let enc_result = if let Some(backend) = &malicious {
-                // Malicious-secure compute via MP-SPDZ MASCOT.
-                match backend.run(&bytecode, &task.enc_inputs) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        warn!("malicious backend error for {}: {e}", task.computation_id);
-                        continue;
-                    }
-                }
+
+            let backend_result = if let Some(backend) = &malicious {
+                backend.run(&bytecode, &task.enc_inputs) // MP-SPDZ MASCOT
             } else if let Some(session) = &mpc_session {
-                // Real multi-party BGW over the authenticated, encrypted mesh.
-                match session.run(&bytecode, &task.enc_inputs) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        warn!("mpc session error for {}: {e}", task.computation_id);
-                        continue;
+                session.run(&bytecode, &task.enc_inputs) // BGW over the encrypted mesh
+            } else {
+                engine.run(&bytecode, &task.enc_inputs) // single-process engine
+            };
+
+            let enc_result = match backend_result {
+                Ok(r) => r,
+                Err(e) if distributed && is_submitter => {
+                    // A peer is down or the mesh stalled. The submitter holds the
+                    // cluster key, so it completes the job alone on the local engine
+                    // rather than dropping it (graceful degradation).
+                    warn!("distributed backend failed for {id} ({e}); falling back to local engine");
+                    match engine.run(&bytecode, &task.enc_inputs) {
+                        Ok(r) => {
+                            info!("computed {id} via local-engine fallback (mesh/peer unavailable)");
+                            r
+                        }
+                        Err(e2) => {
+                            warn!("engine fallback also failed for {id}: {e2}");
+                            retry_or_drop!(task, attempt, id);
+                        }
                     }
                 }
-            } else {
-                match engine.run(&bytecode, &task.enc_inputs) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        warn!("engine error for {}: {e}", task.computation_id);
-                        continue;
-                    }
+                Err(e) if !is_submitter => {
+                    // A non-submitting peer couldn't participate; the submitter falls
+                    // back to its own engine, so this node simply drops its attempt.
+                    warn!("mpc participation failed for {id}: {e}");
+                    attempts.remove(&id);
+                    continue;
+                }
+                Err(e) => {
+                    warn!("engine error for {id}: {e}");
+                    retry_or_drop!(task, attempt, id);
                 }
             };
 
@@ -166,10 +205,8 @@ async fn main() -> anyhow::Result<()> {
             // designated submitter posts it on-chain (avoids N duplicate submits).
             if let Some(m) = &cfg.mpc {
                 if !m.submitter {
-                    info!(
-                        "participated in MPC for {} (submitter posts result)",
-                        task.computation_id
-                    );
+                    info!("participated in MPC for {id} (submitter posts result)");
+                    attempts.remove(&id);
                     if cfg.run_once {
                         info!("run_once set; exiting after one computation");
                         return Ok(());
@@ -178,15 +215,16 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let sig = signer.sign_result(task.computation_id, &enc_result);
+            let sig = signer.sign_result(id, &enc_result);
             // Tolerate transient RPC failures with exponential backoff (3 tries).
             let submit = retry::retry_with_backoff(3, Duration::from_millis(800), || {
-                chain.submit_result(task.computation_id, enc_result.clone(), sig)
+                chain.submit_result(id, enc_result.clone(), sig)
             })
             .await;
             match submit {
                 Ok(tx) => {
-                    info!("submitted result for {} in tx {}", task.computation_id, tx);
+                    info!("submitted result for {id} in tx {tx}");
+                    attempts.remove(&id);
                     Metrics::inc(&metrics.completed);
                     if cfg.run_once {
                         info!("run_once set; exiting after one successful computation");
@@ -194,11 +232,12 @@ async fn main() -> anyhow::Result<()> {
                     }
                 }
                 Err(e) => {
-                    warn!("submit failed for {}: {e}", task.computation_id);
                     Metrics::inc(&metrics.submit_errors);
                     if cfg.run_once {
                         anyhow::bail!("submit failed under run_once: {e}");
                     }
+                    warn!("submit failed for {id}: {e}");
+                    retry_or_drop!(task, attempt, id);
                 }
             }
         }
