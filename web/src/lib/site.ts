@@ -5,7 +5,7 @@ export const site = {
   description:
     "Glasel is a confidential computing network on Base. Data goes in encrypted, the network computes on it without ever seeing it, and the result comes back verified on-chain. Nobody — not a node, not Glasel, not a bot — ever sees your users' data.",
   url: "https://glasel.network",
-  github: "https://github.com/confide-network/confide",
+  github: "https://github.com/Glaselxyz/glasel-network",
   chain: {
     name: "Base Sepolia",
     chainId: 84532,
