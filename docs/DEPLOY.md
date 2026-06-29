@@ -102,15 +102,38 @@ docker run -d --name glaseld --restart unless-stopped \
 Or native via systemd (`node/deploy/glaseld.service`), which is how the current
 testnet node runs.
 
-**Architecture note.** The current testnet runs the simulated single-process
-engine: ONE daemon holds the combined cluster X25519 + BLS group key and submits
-results; the other registered+staked operators provide on-chain decentralisation
-(threshold) but don't each run a daemon in this mode (they'd duplicate-submit).
-To run a genuine multi-node compute mesh, configure `[mpc]` (BGW over the Noise
-mesh) or `[malicious]` (MP-SPDZ MASCOT) per `config.rs` — that is the path to
-3–5 independent compute nodes.
+**Architecture note.** The live default is the single-process engine: ONE daemon
+(node-1) holds the combined cluster X25519 + BLS group key and submits results;
+the other registered+staked operators provide on-chain decentralisation but stay
+idle (`systemctl stop && disable`) so they don't duplicate-submit. The real
+3-party BGW mesh (`[mpc]`) is built, tested, and one command away — see below.
 
-### c. Key safety
+### c. Compute mode: single daemon (default) vs. BGW mesh
+
+The daemon runs the local engine unless `glaseld.toml` has an `[mpc]` block, in
+which case it joins a BGW secret-sharing session over the authenticated Noise mesh.
+
+**Why single daemon is the live default.** With `n=3, t=1`, BGW needs all three
+nodes present to compute (t is the *privacy* threshold, not fault tolerance), and
+a failed session is not retried — so the mesh's availability is the *product* of
+three machines and a single node outage silently drops jobs (→ on-chain timeout →
+self-slashing). Since all three nodes are operated by one party today, the mesh's
+privacy-vs-a-curious-peer benefit is also unrealized. So: single daemon for
+reliability now; flip to the mesh once nodes are independently operated and the
+daemon has re-enqueue + graceful peer-down fallback.
+
+**Flip to the BGW mesh:**
+```sh
+# 1. roster + Noise keys live in gitignored contracts/mpc-mesh.json
+#    (generate keys: cargo run -p glasel-mpc --example noise_keygen -- 3)
+cd sdk && bun run scripts/gen-mpc-configs.ts $(cast block-number --rpc-url https://sepolia.base.org)
+# 2. ship each /tmp/glaseld-node{1,2,3}.toml to its node as /root/glaseld.toml,
+#    enable+start glaseld on all three (mesh port 9100 must be reachable peer-to-peer)
+```
+**Flip back to single daemon:** ship `contracts/glaseld.golive.toml` (no `[mpc]`)
+to node-1 and `systemctl stop && disable glaseld` on node-2/node-3.
+
+### d. Key safety
 
 Daemon secrets in `glaseld.toml` should use `env:`/`file:` references in
 production, not inline values (the daemon warns at startup if inlined). Keep an
