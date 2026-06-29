@@ -16,7 +16,7 @@
 //! evaluation, opening — is real.
 use crate::config::Mpc;
 use glasel_circuit::deserialize as deserialize_circuit;
-use glasel_crypto::{decrypt, deserialize_payload, seal, serialize_payload};
+use glasel_crypto::{decrypt, deserialize_payload, field_pair_to_pubkey, seal, serialize_payload};
 use glasel_mpc::net::SecureTcpNet;
 use glasel_mpc::session::{distribute_inputs, receive_inputs};
 use glasel_mpc::{run_party, Fe};
@@ -58,18 +58,33 @@ impl MpcSession {
 
         let mut rng = rand::thread_rng();
 
-        // Obtain this party's input shares over the encrypted mesh.
+        // Obtain this party's input shares over the encrypted mesh. The dealer
+        // decrypts the on-chain ciphertext, peels the requester's X25519 recipient
+        // key (carried as the first two field elements, like the single-process
+        // engine), and secret-shares only the circuit inputs.
+        let mut recipient: Option<[u8; 32]> = None;
         let my_shares: Vec<Fe> = if self.cfg.party_id == self.cfg.dealer_id {
             let payload = deserialize_payload(enc_inputs).map_err(|e| anyhow::anyhow!(e))?;
-            let inputs = decrypt(&payload, &self.cluster_key);
-            distribute_inputs(&net, &inputs, n, t, &mut rng)
+            let decrypted = decrypt(&payload, &self.cluster_key);
+            if decrypted.len() < 2 {
+                anyhow::bail!(
+                    "sealed inputs missing recipient-key prefix (need >= 2 field elements, got {})",
+                    decrypted.len()
+                );
+            }
+            recipient = Some(field_pair_to_pubkey(&decrypted[0], &decrypted[1]));
+            distribute_inputs(&net, &decrypted[2..], n, t, &mut rng)
         } else {
             receive_inputs(&net, self.cfg.dealer_id, circuit.input_count as usize)
         };
 
-        // Evaluate the circuit over shares and open the result.
+        // Evaluate the circuit over shares and open the result. Seal to the per-job
+        // recipient: the submitter is the dealer (it decrypted the inputs), so the
+        // submitted result is sealed to the requester and only they can decrypt it.
+        // Non-dealer parties don't submit, so their config fallback is unused.
         let outputs: Vec<Fe> = run_party(&circuit, &my_shares, &net, t, &mut rng);
-        let sealed = seal(&outputs, &self.recipient_key);
+        let recipient_key = recipient.unwrap_or(self.recipient_key);
+        let sealed = seal(&outputs, &recipient_key);
         Ok(serialize_payload(&sealed))
     }
 }
@@ -80,7 +95,7 @@ mod tests {
     use crate::config::{Mpc, Party};
     use glasel_circuit::ir::{Circuit, Gate};
     use glasel_circuit::serialize as serialize_circuit;
-    use glasel_crypto::generate_keypair;
+    use glasel_crypto::{generate_keypair, pubkey_to_field_pair};
     use glasel_mpc::secure::generate_static_keypair;
     use num_bigint::BigUint;
     use std::sync::Arc;
@@ -104,8 +119,11 @@ mod tests {
         let (cluster_priv, cluster_pub) = generate_keypair();
         let (recipient_priv, recipient_pub) = generate_keypair();
 
-        // The on-chain encInputs: inputs sealed to the cluster key.
-        let inputs = vec![BigUint::from(1000u64), BigUint::from(7u64)];
+        // The on-chain encInputs: the requester's recipient key (2 field elements)
+        // prepended to the circuit inputs, all sealed to the cluster key — exactly
+        // what the SDK's client.encrypt produces with recipientPublicKey.
+        let [hi, lo] = pubkey_to_field_pair(&recipient_pub);
+        let inputs = vec![hi, lo, BigUint::from(1000u64), BigUint::from(7u64)];
         let enc_inputs = Arc::new(serialize_payload(&seal(&inputs, &cluster_pub)));
 
         let circuit = Circuit {
