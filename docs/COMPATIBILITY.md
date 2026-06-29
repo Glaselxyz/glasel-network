@@ -26,6 +26,35 @@ gained a field, or a renamed function).
 | FeeOracle | `0x0d3cCA64CaAC0b9c1CBaE9420898A33d8b3615Fc` |
 | ComputationCoordinator | `0x1FbB367715D26F752357dc7ee60b957CB40d8452` |
 
+### Live cluster + ready-to-use MXE
+
+A cluster and an `order_notional` MXE (computes `price * quantity` confidentially)
+are already deployed, so you can run a job without deploying anything — see
+`sdk/examples/quickstart.mjs`.
+
+| Id | Value |
+|---|---|
+| clusterId | `0xdcc20d23e53232465d569e2498bb798a6f7e3b54b5f9d16ad2b0b0d2ba1eefe2` |
+| mxeId | `0xd225ab0f770065fa35a9d279cc02d5397646a09d3801c803133ddec7fdfc2690` |
+| compDefId | `0x3f9bbaa3c6563b5fe2b5a39b70fd8fc7c98f855bc85650470bd5e65b54c65eb9` |
+
+The cluster is **Permissionless**, so you can also deploy your own circuit
+(`glaselvm compile … && glaselvm deploy-circuit …`), create your own MXE
+(`MXEFactory.createMXE`), and commission against it — no allowlist.
+
+### 30-second quickstart
+
+```sh
+npm install @glasel/client viem
+export PRIVATE_KEY=0x...   # Base Sepolia key with GLASEL (faucet) + ETH (gas)
+node quickstart.mjs        # from sdk/examples/quickstart.mjs
+```
+
+Encrypts an order, commissions it on the live network, and decrypts the
+node-computed result (`price*quantity`) that only your key can read. You need
+**GLASEL** (from the faucet) to pay the computation fee and **Base Sepolia ETH**
+(from a public ETH faucet) for gas — see [RPC.md](RPC.md).
+
 ## Rules of thumb
 
 - **SDK ↔ contracts**: the SDK reads contract ABIs from `sdk/src/abi.ts`. If a

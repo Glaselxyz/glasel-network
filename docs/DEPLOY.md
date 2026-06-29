@@ -157,6 +157,17 @@ revert; see [RUNBOOK.md](RUNBOOK.md).
 
 ## 5. Pre-mainnet gates (not required for testnet)
 
-Verify contracts on Basescan, host the subgraph on The Graph, line up an external
-audit, and open a bug bounty. See [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md)
-for the full rollout and [DISCLAIMER.md](DISCLAIMER.md) for the testnet caveats.
+**Verify contracts on Basescan** (strong free trust signal):
+```sh
+cd contracts && BASESCAN_API_KEY=your_key ./verify.sh
+```
+Then host the subgraph on The Graph, line up an external audit, and open a bug
+bounty. See [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md) for the full
+rollout and [DISCLAIMER.md](DISCLAIMER.md) for the testnet caveats.
+
+## Quick reference
+
+- **Dev quickstart:** `sdk/examples/quickstart.mjs` (+ live ids in
+  [COMPATIBILITY.md](COMPATIBILITY.md)) — tested against the live network.
+- **Web env:** `web/.env.example` — faucet + RPC vars for the Vercel deploy (§2).
+- **Verify contracts:** `contracts/verify.sh`.
