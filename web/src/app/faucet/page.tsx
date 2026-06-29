@@ -38,8 +38,10 @@ export default function FaucetPage() {
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-cyan">Testnet faucet</p>
       <h1 className="mt-3 font-display text-4xl font-semibold text-ink">Get test GLASEL</h1>
       <p className="mt-4 text-muted">
-        GLASEL on {site.chain.name} is used to pay computation fees. It has no value and is for
-        testing only. One claim per address per day.
+        Heads up: you <span className="text-ice">don&apos;t need GLASEL to run computations</span> —
+        testnet jobs are free, you just need {site.chain.name} ETH for gas. GLASEL is the operator
+        staking token; grab some here only if you want to experiment with staking. No value, testing
+        only, one claim per address per day.
       </p>
 
       <form onSubmit={claim} className="mt-8 rounded-2xl border border-line bg-panel p-6">

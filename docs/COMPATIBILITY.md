@@ -46,14 +46,15 @@ The cluster is **Permissionless**, so you can also deploy your own circuit
 
 ```sh
 npm install @glasel/client viem
-export PRIVATE_KEY=0x...   # Base Sepolia key with GLASEL (faucet) + ETH (gas)
+export PRIVATE_KEY=0x...   # Base Sepolia key with ETH for gas
 node quickstart.mjs        # from sdk/examples/quickstart.mjs
 ```
 
 Encrypts an order, commissions it on the live network, and decrypts the
-node-computed result (`price*quantity`) that only your key can read. You need
-**GLASEL** (from the faucet) to pay the computation fee and **Base Sepolia ETH**
-(from a public ETH faucet) for gas — see [RPC.md](RPC.md).
+node-computed result (`price*quantity`) that only your key can read. **Jobs are
+free on the testnet — you only need Base Sepolia ETH for gas** (from a public ETH
+faucet); no GLASEL token required. GLASEL is the operator staking token, not a
+developer fee. See [RPC.md](RPC.md).
 
 ## Rules of thumb
 

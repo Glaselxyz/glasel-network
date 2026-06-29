@@ -8,11 +8,12 @@
  * contracts to try it.
  *
  *   npm install @glasel/client viem
- *   export PRIVATE_KEY=0x...        # a Base Sepolia key with GLASEL (faucet) + ETH (gas)
+ *   export PRIVATE_KEY=0x...        # a Base Sepolia key with ETH for gas
  *   export RPC_URL=https://...      # optional; defaults to the public node
  *   node quickstart.mjs
  *
- * Get GLASEL from the faucet and Base Sepolia ETH from a public ETH faucet.
+ * Jobs are FREE on the testnet — you only need Base Sepolia ETH for gas (from a
+ * public ETH faucet). No GLASEL token required.
  */
 import { createPublicClient, createWalletClient, http, parseEventLogs, bytesToHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -31,10 +32,7 @@ const mxeId = "0xd225ab0f770065fa35a9d279cc02d5397646a09d3801c803133ddec7fdfc269
 const compDefId = "0x3f9bbaa3c6563b5fe2b5a39b70fd8fc7c98f855bc85650470bd5e65b54c65eb9";
 const ZERO = "0x0000000000000000000000000000000000000000";
 
-// Minimal ABI fragments for the two writes the SDK doesn't wrap yet.
-const erc20Abi = [
-  { type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [{ type: "bool" }] },
-];
+// Minimal ABI fragment for the commission write (the SDK doesn't wrap it yet).
 const coordinatorWriteAbi = [
   { type: "function", name: "commission", stateMutability: "nonpayable", inputs: [{ type: "bytes32" }, { type: "bytes32" }, { type: "bytes" }, { type: "string" }, { type: "address" }, { type: "bytes4" }, { type: "uint256" }, { type: "uint256" }], outputs: [{ type: "bytes32" }] },
   { type: "event", name: "ComputationRequested", inputs: [{ name: "computationId", type: "bytes32", indexed: true }, { name: "mxeId", type: "bytes32", indexed: true }, { name: "compDefId", type: "bytes32", indexed: true }, { name: "encInputs", type: "bytes", indexed: false }, { name: "inputIpfsCid", type: "string", indexed: false }, { name: "deadline", type: "uint64", indexed: false }] },
@@ -79,8 +77,8 @@ async function main() {
   });
   console.log(`Order: price=${order.price} quantity=${order.quantity} (encrypted)`);
 
-  // 3. Pay the fee + commission the computation on-chain.
-  await send({ address: addresses.token, abi: erc20Abi, functionName: "approve", args: [addresses.coordinator, 2n ** 255n] });
+  // 3. Commission the computation on-chain. Jobs are free on the testnet, so
+  //    there's no fee token to approve — you just pay gas.
   const rc = await send({
     address: addresses.coordinator, abi: coordinatorWriteAbi, functionName: "commission",
     args: [mxeId, compDefId, encInputs, "", ZERO, "0x00000000", 0n, 0n],
