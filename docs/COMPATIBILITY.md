@@ -51,10 +51,12 @@ node quickstart.mjs        # from sdk/examples/quickstart.mjs
 ```
 
 Encrypts an order, commissions it on the live network, and decrypts the
-node-computed result (`price*quantity`) that only your key can read. **Jobs are
-free on the testnet — you only need Base Sepolia ETH for gas** (from a public ETH
-faucet); no GLASEL token required. GLASEL is the operator staking token, not a
-developer fee. See [RPC.md](RPC.md).
+node-computed result (`price*quantity`) that only your key can read. **Right now
+testnet jobs are free — you only need Base Sepolia ETH for gas** (from a public
+ETH faucet). GLASEL is the network's token: developers pay job fees in GLASEL and
+operators stake it. The per-job fee is currently set to 0 for launch and will be
+enabled as the testnet matures (you'll get GLASEL from the faucet then). See
+[RPC.md](RPC.md).
 
 ## Rules of thumb
 
