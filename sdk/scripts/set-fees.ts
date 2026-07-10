@@ -9,12 +9,14 @@
  */
 import { createPublicClient, createWalletClient, http, parseEther, type Hex, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
 import { readFileSync } from "node:fs";
+import { resolveChain, defaultRpc } from "./chain.js";
 
+const chain = resolveChain();
 const ROOT = new URL("../..", import.meta.url).pathname;
-const FEE_ORACLE = "0x0d3cCA64CaAC0b9c1CBaE9420898A33d8b3615Fc" as Address;
-const COMP_DEF = "0x3f9bbaa3c6563b5fe2b5a39b70fd8fc7c98f855bc85650470bd5e65b54c65eb9" as Hex; // order_notional
+// Base Sepolia defaults; override with FEE_ORACLE / COMP_DEF on other chains.
+const FEE_ORACLE = (process.env.FEE_ORACLE ?? "0x0d3cCA64CaAC0b9c1CBaE9420898A33d8b3615Fc") as Address;
+const COMP_DEF = (process.env.COMP_DEF ?? "0x3f9bbaa3c6563b5fe2b5a39b70fd8fc7c98f855bc85650470bd5e65b54c65eb9") as Hex; // order_notional
 
 const feeOracleAbi = [
   { type: "function", name: "setFeeParams", stateMutability: "nonpayable", inputs: [{ type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" }], outputs: [] },
@@ -30,7 +32,7 @@ const params: [bigint, bigint, bigint, bigint, bigint] =
 
 function loadEnv() {
   const raw = readFileSync(`${ROOT}/contracts/.env`, "utf8");
-  const rpc = process.env.RPC_URL || (raw.match(/RPC_URL=(.+)/)?.[1] ?? "https://sepolia.base.org").trim();
+  const rpc = process.env.RPC_URL || (raw.match(/RPC_URL=(.+)/)?.[1] ?? defaultRpc(chain)).trim();
   let pk = (raw.match(/PRIVATE_KEY=(.+)/)?.[1] ?? "").trim();
   if (!pk.startsWith("0x")) pk = `0x${pk}`;
   return { rpc, pk: pk as Hex };
@@ -38,7 +40,6 @@ function loadEnv() {
 
 async function main() {
   const { rpc, pk } = loadEnv();
-  const chain = baseSepolia;
   const publicClient = createPublicClient({ chain, transport: http(rpc) });
   const account = privateKeyToAccount(pk);
   const wallet = createWalletClient({ account, chain, transport: http(rpc) });

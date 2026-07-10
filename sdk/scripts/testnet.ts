@@ -37,9 +37,11 @@ import {
   type PublicClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
 import { readFileSync } from "node:fs";
+import { resolveChain, defaultRpc, broadcastDir } from "./chain.js";
 import { generateKeyPair, publicKeyFromPrivate } from "../src/x25519.js";
+
+const chain = resolveChain();
 import { encodeValues, serializePayload, ORDER_SCHEMA } from "../src/codec.js";
 import { seal } from "../src/crypto.js";
 import { GlaselClient } from "../src/client.js";
@@ -135,7 +137,7 @@ function loadEnv(): { rpc: string; pk: Hex } {
     const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.+?)\s*$/);
     if (m) env[m[1]!] = m[2]!;
   }
-  const rpc = process.env.RPC_URL || env.RPC_URL || "https://sepolia.base.org";
+  const rpc = process.env.RPC_URL || env.RPC_URL || defaultRpc(chain);
   let pk = (process.env.PRIVATE_KEY || env.PRIVATE_KEY || "") as string;
   if (!pk.startsWith("0x")) pk = `0x${pk}`;
   if (pk.length !== 66) throw new Error("PRIVATE_KEY missing/invalid in contracts/.env");
@@ -143,7 +145,7 @@ function loadEnv(): { rpc: string; pk: Hex } {
 }
 
 function loadAddresses(): Record<string, Address> {
-  const path = `${CONTRACTS_DIR}/broadcast/Deploy.s.sol/84532/run-latest.json`;
+  const path = broadcastDir(CONTRACTS_DIR, chain);
   const bc = JSON.parse(readFileSync(path, "utf8"));
   const proxies: Address[] = bc.transactions
     .filter((t: any) => t.contractName === "ERC1967Proxy" && t.transactionType === "CREATE")
@@ -156,7 +158,6 @@ function loadAddresses(): Record<string, Address> {
 async function main() {
   const { rpc, pk } = loadEnv();
   const A = loadAddresses();
-  const chain = baseSepolia;
   const publicClient = createPublicClient({ chain, transport: http(rpc) }) as PublicClient;
 
   const admin = privateKeyToAccount(pk);

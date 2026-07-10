@@ -20,9 +20,13 @@ target/
 keystore/
 secrets.env
 # Live cluster bring-up artifacts (contain node/cluster private keys)
+# (also the per-chain variants, e.g. golive-state.46630.json for Robinhood)
 golive-state.json
+golive-state.*.json
 glaseld.golive.toml
+glaseld.golive.*.toml
 mpc-mesh.json
+mpc-mesh.*.json
 *.golive.bin
 *.golive.bin.abi.json
 # ...but DO commit the templates

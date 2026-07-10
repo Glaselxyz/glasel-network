@@ -88,8 +88,8 @@ export default function FaucetPage() {
 
       <div className="mt-8 text-sm text-muted">
         <p>
-          You also need {site.chain.name} ETH for gas — get it from a public Base Sepolia ETH
-          faucet (Coinbase Developer Platform, Alchemy). This faucet dispenses GLASEL only.
+          You also need {site.chain.name} ETH for gas — get it from {site.gasFaucetHint}. This
+          faucet dispenses GLASEL only.
         </p>
       </div>
     </main>

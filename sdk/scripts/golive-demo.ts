@@ -20,29 +20,30 @@ import {
   type Hex, type Address, type WalletClient, type PublicClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
 import { readFileSync } from "node:fs";
+import { resolveChain, defaultRpc, broadcastDir, chainFile } from "./chain.js";
 import { generateKeyPair, publicKeyFromPrivate } from "../src/x25519.js";
 import { ORDER_SCHEMA } from "../src/codec.js";
 import { GlaselClient } from "../src/client.js";
 import { tokenAbi, coordWriteAbi } from "./e2e-abi.js";
 
+const chain = resolveChain();
 const ROOT = new URL("../..", import.meta.url).pathname;
 const CONTRACTS_DIR = `${ROOT}/contracts`;
-const STATE_PATH = `${CONTRACTS_DIR}/golive-state.json`;
+const STATE_PATH = chainFile(CONTRACTS_DIR, "golive-state", "json", chain);
 const ZERO = "0x0000000000000000000000000000000000000000" as Address;
 
 function loadEnv(): { rpc: string; pk: Hex } {
   const raw = readFileSync(`${CONTRACTS_DIR}/.env`, "utf8");
   const env: Record<string, string> = {};
   for (const line of raw.split("\n")) { const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.+?)\s*$/); if (m) env[m[1]!] = m[2]!; }
-  const rpc = process.env.RPC_URL || env.RPC_URL || "https://sepolia.base.org";
+  const rpc = process.env.RPC_URL || env.RPC_URL || defaultRpc(chain);
   let pk = (process.env.PRIVATE_KEY || env.PRIVATE_KEY || "") as string;
   if (!pk.startsWith("0x")) pk = `0x${pk}`;
   return { rpc, pk: pk as Hex };
 }
 function loadAddresses(): Record<string, Address> {
-  const bc = JSON.parse(readFileSync(`${CONTRACTS_DIR}/broadcast/Deploy.s.sol/84532/run-latest.json`, "utf8"));
+  const bc = JSON.parse(readFileSync(broadcastDir(CONTRACTS_DIR, chain), "utf8"));
   const px: Address[] = bc.transactions.filter((t: any) => t.contractName === "ERC1967Proxy" && t.transactionType === "CREATE").map((t: any) => t.contractAddress);
   const [token, registry, staking, clusterManager, mxeFactory, compRegistry, feeOracle, coordinator] = px;
   return { token, registry, staking, clusterManager, mxeFactory, compRegistry, feeOracle, coordinator } as Record<string, Address>;
@@ -54,7 +55,6 @@ async function main() {
   const state = JSON.parse(readFileSync(STATE_PATH, "utf8"));
   if (!state.mxeId || !state.compDefId || !state.clusterId) throw new Error("run golive-wire.ts first");
 
-  const chain = baseSepolia;
   const publicClient = createPublicClient({ chain, transport: http(rpc) }) as PublicClient;
   const dev = privateKeyToAccount(pk); // the requester pays the fee + gas
   const devWallet = createWalletClient({ account: dev, chain, transport: http(rpc) });

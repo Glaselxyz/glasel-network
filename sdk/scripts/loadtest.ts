@@ -11,11 +11,12 @@
  */
 import { createPublicClient, createWalletClient, http, keccak256, encodeAbiParameters, parseEventLogs, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
 import { readFileSync } from "node:fs";
 import { coordWriteAbi } from "./e2e-abi.js";
 import { blsSign } from "./bls.js";
+import { resolveChain, defaultRpc, broadcastDir } from "./chain.js";
 
+const chain = resolveChain();
 const ROOT = new URL("../..", import.meta.url).pathname;
 const env = Object.fromEntries(
   readFileSync(`${ROOT}/contracts/.env`, "utf8").split("\n").filter((l) => l.includes("=")).map((l) => {
@@ -23,10 +24,10 @@ const env = Object.fromEntries(
     return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, "")];
   }),
 );
-const RPC = env.RPC_URL || "https://sepolia.base.org";
+const RPC = env.RPC_URL || defaultRpc(chain);
 const account = privateKeyToAccount(env.PRIVATE_KEY as Hex);
 
-const bc = JSON.parse(readFileSync(`${ROOT}/contracts/broadcast/Deploy.s.sol/84532/run-latest.json`, "utf8"));
+const bc = JSON.parse(readFileSync(broadcastDir(`${ROOT}/contracts`, chain), "utf8"));
 const proxies = bc.transactions.filter((t: any) => t.contractName === "ERC1967Proxy").map((t: any) => t.contractAddress);
 const coordinator = proxies[7] as Hex; // deploy order: token..coordinator
 
@@ -35,8 +36,8 @@ const COMP_DEF_ID = process.env.COMP_DEF_ID as Hex;
 const N = Number(process.env.CONCURRENCY || "20");
 if (!MXE_ID || !COMP_DEF_ID) throw new Error("set MXE_ID and COMP_DEF_ID (from a testnet.ts run)");
 
-const publicClient = createPublicClient({ chain: baseSepolia, transport: http(RPC) });
-const wallet = createWalletClient({ account, chain: baseSepolia, transport: http(RPC) });
+const publicClient = createPublicClient({ chain, transport: http(RPC) });
+const wallet = createWalletClient({ account, chain, transport: http(RPC) });
 const ZERO = "0x0000000000000000000000000000000000000000" as Hex;
 
 async function oneComputation(i: number): Promise<number> {

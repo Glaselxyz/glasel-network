@@ -59,19 +59,59 @@ tokenized equities are exactly our reference apps (`DarkPool`, `SealedBidAuction
 `ConfidentialVote`). "Private computation for 24/7 tokenized markets" is a sharper
 pitch on Robinhood Chain than on a general-purpose L2.
 
+## What's already wired (done in-repo)
+
+The code is now chain-agnostic and switches by a single env var — no source edits
+needed to target Robinhood:
+
+- **Chain definitions** — `sdk/scripts/chain.ts` and `web/src/lib/chain.ts` define
+  `robinhoodTestnet` (46630) and `robinhoodMainnet` (4663) viem chains alongside Base.
+- **SDK scripts** — `golive-wire`, `golive-demo`, `set-fees`, `grant-minter`,
+  `loadtest`, `testnet` read `CHAIN=base-sepolia|robinhood-testnet|robinhood-mainnet`
+  (default `base-sepolia`). The Foundry broadcast path and the persisted state/toml
+  files are now keyed by chain id, so a Robinhood deploy never clobbers the live Base
+  state (`golive-state.46630.json`, `glaseld.golive.46630.toml`).
+- **Web app** — `site.ts` derives chain name / id / explorer / RPC / marketing copy /
+  gas-faucet hint from the active chain (`NEXT_PUBLIC_CHAIN`). Robinhood addresses are
+  read from `NEXT_PUBLIC_*` env (set them on Vercel after the deploy).
+- **Node (`glaseld`)** — already chain-agnostic (reads the chain id from `rpc_url`);
+  `golive-wire` writes a ready-to-use `glaseld.golive.46630.toml`.
+- **One-command runbook** — `scripts/deploy-robinhood.sh testnet` runs the whole
+  Phase 0/1 deploy with preflight safety checks (see below).
+
+What still needs **you** (funds/keys, not code): a Robinhood-funded deployer, and —
+after the deploy — setting the new `NEXT_PUBLIC_*` addresses on Vercel and funding the
+node submitter with Robinhood ETH.
+
 ## The plan
 
 ### Phase 0 — De-risk (½ day)
-1. Add Base-style RPC + chain config for Robinhood testnet (chain 46630).
-2. Deploy the contracts to Robinhood testnet: `forge script Deploy --rpc-url <rh-testnet> --broadcast` (fund the deployer from the RH faucet).
-3. Run one real confidential job (`golive-wire` + `golive-demo`) → **confirm BLS `submitResult` verifies on-chain.** This proves the precompiles + the whole path.
+1. Fund a throwaway deployer from the Robinhood testnet faucet
+   (https://faucet.testnet.chain.robinhood.com); put its key in `contracts/.env` and
+   set `RPC_URL=https://rpc.testnet.chain.robinhood.com`.
+2. Run the one-command deploy:
+   ```
+   scripts/deploy-robinhood.sh testnet
+   ```
+   It preflights the chain id + deployer balance, deploys the 8 proxies, wires the
+   cluster + demo circuit + MXE (`CHAIN=robinhood-testnet golive-wire`), then runs one
+   real confidential job (`golive-demo`).
+3. If that job's result **verifies on-chain**, the BLS precompiles (ecPairing 0x08 /
+   modexp 0x05) work and the single real risk is cleared. New addresses land in
+   `contracts/broadcast/Deploy.s.sol/46630/run-latest.json`.
 
 ### Phase 1 — Full testnet migration (1–2 days)
-4. Repoint the **SDK**: add a `robinhoodTestnet` viem chain, swap addresses; republish `@glasel/client@0.3.0`.
-5. Repoint the **node**: `glaseld.toml` `rpc_url` + `[contracts]`; fund the submitter with RH testnet ETH; restart the daemon.
-6. Repoint the **web app**: chain + addresses in `site.ts`; redeploy to Vercel; `/api/status` should show the RH cluster active.
+4. **SDK** — republish `@glasel/client@0.3.0` if the addresses are baked into examples;
+   the chain is already defined. (Scripts already switch via `CHAIN=`.)
+5. **Node** — copy `glaseld.golive.46630.toml` to node-1, fund the submitter with RH
+   testnet ETH, restart the daemon. (`rpc_url` is already correct in that file.)
+6. **Web** — on Vercel set `NEXT_PUBLIC_CHAIN=robinhood-testnet` and the
+   `NEXT_PUBLIC_COORDINATOR/TOKEN/STAKING/CLUSTER_MANAGER/REGISTRY/MXE_FACTORY/`
+   `COMP_REGISTRY/FEE_ORACLE/CLUSTER_ID` addresses from the deploy; redeploy. `/api/status`
+   should then show the RH cluster active.
 7. Verify the **quickstart** end-to-end on Robinhood testnet from a fresh wallet.
-8. Update all docs (COMPATIBILITY, DEPLOY, RPC) + `verify.sh` for the **Blockscout** verifier.
+8. Update the doc code-samples (`web/src/app/page.tsx` hero, `docs/quickstart`) + docs
+   (COMPATIBILITY, DEPLOY, RPC) + `verify.sh` for the **Blockscout** verifier.
 
 ### Phase 2 — Operational parity (½ day)
 9. Faucet, submitter gas, status page, monitoring — same as today, pointed at RH testnet.

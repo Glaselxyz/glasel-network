@@ -24,7 +24,7 @@ import {
   type Hex, type Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
+import { activeChain } from "@/lib/chain";
 import { addresses, defaultRpcUrl } from "@/lib/site";
 
 export const runtime = "nodejs";
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
   const amount = parseEther(amountWhole.toString());
 
   try {
-    const chain = baseSepolia;
+    const chain = activeChain;
     const transport = http(rpcUrl());
     const publicClient = createPublicClient({ chain, transport });
     const account = privateKeyToAccount(key.startsWith("0x") ? key : (`0x${key}` as Hex));

@@ -6,7 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { createPublicClient, http, type Address, type Hex } from "viem";
-import { baseSepolia } from "viem/chains";
+import { activeChain } from "@/lib/chain";
 import { addresses, clusterId, defaultRpcUrl } from "@/lib/site";
 
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ const clusterAbi = [
 
 export async function GET() {
   const rpc = process.env.RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || defaultRpcUrl;
-  const client = createPublicClient({ chain: baseSepolia, transport: http(rpc) });
+  const client = createPublicClient({ chain: activeChain, transport: http(rpc) });
 
   const out: {
     rpcReachable: boolean;
