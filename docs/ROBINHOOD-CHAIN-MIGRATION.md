@@ -149,14 +149,22 @@ Notes from the run:
 3. **Testnet jobs set FREE on RH** (`set-fees.ts free`, estimateFee → 0) so devs need only
    Robinhood ETH for gas — matching Base's posture. GLASEL fees remain a mainnet thing.
 
-**Robinhood testnet is now the live public network.** Follow-ups (not blockers):
-- **Dedicated RPC** — status page block number can look stale on the public RH RPC; add an
-  Alchemy RH key as `RPC_URL`/`NEXT_PUBLIC_RPC_URL` (same as the Base launch checklist).
-- **Faucet on RH** — only needed if fees are later turned on; the faucet wallet would then
-  need `MINTER_ROLE` on the RH token + RH gas. Optional while jobs are free.
-- **Pre-existing doc staleness** (unrelated to the chain): architecture/security still
-  describe threshold-ECDSA though the protocol now uses BN254 BLS; `@confide/*` package
-  names in docs vs the published `@glasel/client`.
+**Robinhood testnet is now the live public network.** Post-cutover cleanup (done):
+- **Stale status — FIXED (was caching, not the RPC).** The public RH RPC advances fine
+  (~2 blocks/s); the stale block number was Vercel **edge-caching** the `/api/status` GET.
+  Fixed with `fetchCache = "force-no-store"` + a `Cache-Control: no-store` header. Verified
+  live: consecutive reads now advance.
+- **Docs rebranded to canonical names — DONE.** `@glasel/client`, `GlaselClient`,
+  `glaselvm`, `GlaselOS`, `glasel.toml`, `glasel-crypto`, `Glaselxyz/glasel-network`;
+  "Confide"→"Glasel" (Confidential* preserved). architecture/security now describe the
+  real BN254 BLS path (ecPairing/modexp, EIP-196/197) instead of stale threshold-ECDSA.
+
+Remaining (need you / optional):
+- **Dedicated RPC for rate-limit headroom** — the public RH RPC is fine for now; under
+  ~10 concurrent devs + the node, add an Alchemy RH key as `RPC_URL`/`NEXT_PUBLIC_RPC_URL`
+  (needs your Alchemy account — I can't create one).
+- **Faucet on RH** — only if fees are later turned on; the faucet wallet would then need
+  `MINTER_ROLE` on the RH token + RH gas. Optional while jobs are free.
 
 ## The plan
 
