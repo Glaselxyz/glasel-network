@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Github, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
-import { Wordmark } from "./logo";
+import { Wordmark, XLogo } from "./logo";
 
 const links = [
   { title: "Docs", href: "/docs" },
@@ -79,6 +79,15 @@ export function Nav() {
             </span>
             Live on {site.chain.name}
           </span>
+          <a
+            href={site.x}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition-colors hover:border-line-strong hover:text-white sm:flex"
+            aria-label="X"
+          >
+            <XLogo className="h-3.5 w-3.5" />
+          </a>
           <a
             href={site.github}
             target="_blank"

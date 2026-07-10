@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Github } from "lucide-react";
 import { site } from "@/lib/site";
-import { Logo } from "./logo";
+import { Logo, XLogo } from "./logo";
 
 const cols = [
   {
@@ -45,14 +45,24 @@ export function Footer() {
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
             {site.tagline} MPC over encrypted inputs with threshold-verified results, live on {site.chain.name}.
           </p>
-          <a
-            href={site.github}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-2 text-sm text-muted hover:text-cyan"
-          >
-            <Github className="h-4 w-4" /> GitHub
-          </a>
+          <div className="mt-4 flex items-center gap-4">
+            <a
+              href={site.github}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted hover:text-cyan"
+            >
+              <Github className="h-4 w-4" /> GitHub
+            </a>
+            <a
+              href={site.x}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted hover:text-cyan"
+            >
+              <XLogo className="h-3.5 w-3.5" /> X
+            </a>
+          </div>
         </div>
         {cols.map((c) => (
           <div key={c.title}>

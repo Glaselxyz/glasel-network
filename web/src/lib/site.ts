@@ -25,6 +25,7 @@ export const site = {
   gasFaucetHint,
   url: "https://glasel.network",
   github: "https://github.com/Glaselxyz/glasel-network",
+  x: "https://x.com/glasel",
   chain: {
     name: activeChain.name,
     chainId: activeChain.id,
