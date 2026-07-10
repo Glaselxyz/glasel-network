@@ -159,10 +159,20 @@ Notes from the run:
   "Confide"→"Glasel" (Confidential* preserved). architecture/security now describe the
   real BN254 BLS path (ecPairing/modexp, EIP-196/197) instead of stale threshold-ECDSA.
 
-Remaining (need you / optional):
-- **Dedicated RPC for rate-limit headroom** — the public RH RPC is fine for now; under
-  ~10 concurrent devs + the node, add an Alchemy RH key as `RPC_URL`/`NEXT_PUBLIC_RPC_URL`
-  (needs your Alchemy account — I can't create one).
+Dedicated RPC — **DONE (split by workload)**. A QuickNode RH-testnet endpoint is wired
+where it helps, kept off where it hurts:
+- **Web routes → QuickNode** (`RPC_URL` on Vercel, server-side/encrypted — NOT
+  `NEXT_PUBLIC_*`, so the key never reaches the browser). `/api/status` + faucet only do
+  `eth_call`/`getBlockNumber`, which QuickNode serves fast (~1.1 s round-trip). This is
+  where concurrent dev-facing load lands, so it gets the dedicated endpoint.
+- **Daemon → public RH RPC** (unchanged). ⚠️ **QuickNode's `eth_getLogs` is unusably slow
+  on this endpoint** — ~13 s for a 50-block range, and wide catch-up ranges hang. The
+  daemon polls `getLogs` every 4 s, so QuickNode starves it (jobs never detected). The
+  public RH RPC handles `getLogs` fast (jobs complete in ~4–7 s), so the node stays there.
+  If you later want a dedicated daemon RPC, use one with fast `eth_getLogs` (e.g. Alchemy)
+  and keep `start_block` near head.
+
+Remaining (optional):
 - **Faucet on RH** — only if fees are later turned on; the faucet wallet would then need
   `MINTER_ROLE` on the RH token + RH gas. Optional while jobs are free.
 
