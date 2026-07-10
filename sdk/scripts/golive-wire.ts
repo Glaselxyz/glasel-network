@@ -25,7 +25,7 @@ import {
   parseEventLogs, bytesToHex, toHex, parseEther, formatEther,
   type Hex, type Address, type WalletClient, type PublicClient,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolveChain, defaultRpc, broadcastDir, chainFile } from "./chain.js";
 import { generateKeyPair } from "../src/x25519.js";
@@ -34,7 +34,7 @@ const chain = resolveChain();
 import {
   tokenAbi, registryAbi, stakingAbi, clusterAbi, mxeAbi, coordWriteAbi,
 } from "./e2e-abi.js";
-import { blsGroupKey } from "./bls.js";
+import { randomGroupSecret, groupKeyForSecret } from "./bls.js";
 
 const ROOT = new URL("../..", import.meta.url).pathname;
 const CONTRACTS_DIR = `${ROOT}/contracts`;
@@ -95,14 +95,21 @@ function loadAddresses(): Record<string, Address> {
 interface State {
   clusterPriv: Hex;     // daemon's cluster X25519 private key (32 bytes hex)
   clusterPub: Hex;      // registered on-chain via activateCluster
+  blsSecret: string;    // random BN254 group secret (hex) — NEVER commit; gitignored here
+  submitterKey?: Hex;   // random funded submitter EOA priv — NEVER commit; gitignored here
   clusterId?: Hex;
   compDefId?: Hex;
   mxeId?: Hex;
 }
 function loadState(): State {
-  if (existsSync(STATE_PATH)) return JSON.parse(readFileSync(STATE_PATH, "utf8"));
+  if (existsSync(STATE_PATH)) {
+    const s = JSON.parse(readFileSync(STATE_PATH, "utf8")) as State;
+    // Back-fill a random BLS secret for older state files (never the public constant).
+    if (!s.blsSecret) { s.blsSecret = randomGroupSecret(); writeFileSync(STATE_PATH, JSON.stringify(s, null, 2)); }
+    return s;
+  }
   const kp = generateKeyPair();
-  const s: State = { clusterPriv: bytesToHex(kp.privateKey), clusterPub: bytesToHex(kp.publicKey) };
+  const s: State = { clusterPriv: bytesToHex(kp.privateKey), clusterPub: bytesToHex(kp.publicKey), blsSecret: randomGroupSecret() };
   writeFileSync(STATE_PATH, JSON.stringify(s, null, 2));
   return s;
 }
@@ -122,9 +129,16 @@ async function main() {
   const nodeAccts = nodeKeys.map((k) => privateKeyToAccount(k));
   const nodeWallets = nodeAccts.map((acct) => createWalletClient({ account: acct, chain, transport: http(rpc) }));
   const nodeAddr = (i: number) => nodeAccts[i]!.address as Address;
-  // node-1's key is the daemon's on-chain submitter (signers.keys[0]).
-  const submitterKey = nodeKeys[0]!;
-  const submitterAddr = nodeAddr(0);
+  // The daemon's submitter is a RANDOM, funded EOA (persisted, gitignored) — not
+  // a derived node key. submitResult verifies the BLS group signature, not the
+  // sender, so the submitter only needs gas; keeping it random avoids shipping a
+  // computable live key. Back-fill older state files.
+  if (!state.submitterKey) {
+    state.submitterKey = generatePrivateKey();
+    writeFileSync(STATE_PATH, JSON.stringify(state, null, 2));
+  }
+  const submitterKey = state.submitterKey as Hex;
+  const submitterAddr = privateKeyToAccount(submitterKey).address as Address;
 
   console.log(`Network        : ${chain.name} (chainId ${await publicClient.getChainId()})`);
   console.log(`Admin/deployer : ${admin.address}  (${formatEther(await publicClient.getBalance({ address: admin.address }))} ETH)`);
@@ -215,7 +229,7 @@ async function main() {
     const actMsg = keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "bytes32" }], [state.clusterId, state.clusterPub]));
     const actSigs = await multiSign([nodeAccts[0], nodeAccts[1]], actMsg);
     await send(adminWallet, { address: A.clusterManager, abi: clusterAbi, functionName: "activateCluster", args: [state.clusterId, state.clusterPub, actSigs, [nodeAddr(0), nodeAddr(1)]] }, "activateCluster");
-    await send(adminWallet, { address: A.clusterManager, abi: clusterAbi, functionName: "setBlsGroupKey", args: [state.clusterId, blsGroupKey()] }, "setBlsGroupKey");
+    await send(adminWallet, { address: A.clusterManager, abi: clusterAbi, functionName: "setBlsGroupKey", args: [state.clusterId, groupKeyForSecret(state.blsSecret)] }, "setBlsGroupKey");
     await readUntil(() => publicClient.readContract({ address: A.clusterManager, abi: clusterExtraAbi, functionName: "isActive", args: [state.clusterId] }), (v) => v === true);
   }
   console.log(`   clusterId   ${state.clusterId}  (active)`);
@@ -269,7 +283,7 @@ x25519_private_key = "${state.clusterPriv}"
 # in bls.ts GROUP_SK). The daemon hex-decodes this and reduces mod r, yielding the
 # same Fr the bls-sign binary derives from the decimal — so the daemon's signatures
 # verify against the group key registered on-chain via setBlsGroupKey.
-bls_group_secret = "27e41b3246bec9b16e398115"
+bls_group_secret = "${state.blsSecret}"
 
 [engine]
 

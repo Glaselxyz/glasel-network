@@ -25,6 +25,10 @@ const nodeKeys = [1, 2, 3].map((i) => keccak256(toHex(`glasel-testnet-node-${i}`
 const startBlock = process.argv[2] ?? "0";
 const ZERO_KEY = "0x" + "00".repeat(32);
 const DUMMY_BLS = "01"; // valid hex; unused on non-submitters (they never sign)
+// The real group secret comes from the gitignored golive-state (never hardcoded).
+// Experimental BGW-mesh tooling — the live network runs a single daemon.
+const BLS_SECRET: string = state.blsSecret;
+if (!BLS_SECRET) throw new Error("golive-state.json has no blsSecret — run golive-wire first (it generates + persists a random one)");
 
 const contracts = `[contracts]
 coordinator = "0x1FbB367715D26F752357dc7ee60b957CB40d8452"
@@ -53,7 +57,7 @@ ${contracts}
 # peers get a zero key so they genuinely cannot decrypt. The BLS group secret is
 # real on the submitter (it signs) and a dummy on peers (they never submit).
 x25519_private_key = "${isDealer ? state.clusterPriv : ZERO_KEY}"
-bls_group_secret = "${isDealer ? "27e41b3246bec9b16e398115" : DUMMY_BLS}"
+bls_group_secret = "${isDealer ? BLS_SECRET : DUMMY_BLS}"
 
 [engine]
 
