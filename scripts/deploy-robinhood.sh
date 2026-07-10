@@ -36,9 +36,13 @@ esac
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/contracts"
 [ -f .env ] || { echo "✗ contracts/.env not found — copy .env.example and fill it in." >&2; exit 1; }
+# Capture any caller-provided Robinhood RPC before .env (whose RPC_URL is Base).
+RH_RPC="${RH_RPC:-}"
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
-RPC="${RPC_URL:-$DEF_RPC}"
+# Use the Robinhood RPC (explicit override or the network default) — NOT .env's
+# RPC_URL, which points at Base. Only PRIVATE_KEY/DEPLOYER_ADDRESS come from .env.
+RPC="${RH_RPC:-$DEF_RPC}"
 
 echo "▸ Target: Robinhood $NET ($CHAIN_KEY, chain id $WANT_ID)"
 echo "▸ RPC:    $RPC"
@@ -52,7 +56,8 @@ echo "▸ Deployer $DEPLOYER_ADDRESS balance: $(cast from-wei "$BAL") ETH"
 
 # ---- 1. Deploy the 8 proxies ----------------------------------------------
 echo "▸ Deploying core protocol (forge script Deploy --broadcast)…"
-forge script script/Deploy.s.sol --rpc-url "$RPC" --broadcast
+PK="$PRIVATE_KEY"; [ "${PK#0x}" = "$PK" ] && PK="0x$PK"   # normalise 0x prefix
+forge script script/Deploy.s.sol --rpc-url "$RPC" --broadcast --private-key "$PK"
 
 # ---- 2. Self-contained de-risk: full flow incl. on-chain BLS submitResult ---
 echo "▸ Running the self-contained testnet harness (registers, stakes, forms a"
