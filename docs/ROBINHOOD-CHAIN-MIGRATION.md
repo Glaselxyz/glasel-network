@@ -136,13 +136,27 @@ Notes from the run:
   `clusterActive: true` (reading the RH cluster). Not yet flipped on the public Vercel
   site — that's the cutover decision below.
 
-### Remaining to go public on Robinhood (the cutover)
-1. **Daemon on a durable host** — the Phase-1 daemon ran locally to verify. For 24/7 dev
-   use it must run on a droplet (as Base node-1 does), pointed at
-   `glaseld.golive.46630.toml`. Repointing the existing droplet retires the Base node.
-2. **Flip the public site** — set `NEXT_PUBLIC_CHAIN=robinhood-testnet` + the
-   `NEXT_PUBLIC_*` addresses on Vercel and redeploy → glasel.xyz + status page show RH.
-   (Both are outward-facing — do on an explicit go.)
+### ✅ Public cutover — DONE (2026-07-11)
+1. **Daemon on the droplet** — node-1 (`159.203.160.51`) repointed to
+   `glaseld.golive.46630.toml` (Base config backed up to `/root/glaseld.base-sepolia.toml`);
+   `RUST_LOG=info` drop-in added. It processed a fresh job on RH in ~7 s while the local
+   daemon was stopped (tx confirmed via `glaseld_computations_seen`). The Base node is
+   thereby retired.
+2. **Public site flipped** — `NEXT_PUBLIC_CHAIN=robinhood-testnet` + all `NEXT_PUBLIC_*`
+   addresses set on Vercel; production redeployed to **glasel.xyz**. Live checks:
+   homepage 49 "Robinhood" / 0 "Base", `/docs/network` shows chainId 46630, `/api/status`
+   reads the live RH cluster (`clusterActive: true`). All Base→Robinhood copy updated.
+3. **Testnet jobs set FREE on RH** (`set-fees.ts free`, estimateFee → 0) so devs need only
+   Robinhood ETH for gas — matching Base's posture. GLASEL fees remain a mainnet thing.
+
+**Robinhood testnet is now the live public network.** Follow-ups (not blockers):
+- **Dedicated RPC** — status page block number can look stale on the public RH RPC; add an
+  Alchemy RH key as `RPC_URL`/`NEXT_PUBLIC_RPC_URL` (same as the Base launch checklist).
+- **Faucet on RH** — only needed if fees are later turned on; the faucet wallet would then
+  need `MINTER_ROLE` on the RH token + RH gas. Optional while jobs are free.
+- **Pre-existing doc staleness** (unrelated to the chain): architecture/security still
+  describe threshold-ECDSA though the protocol now uses BN254 BLS; `@confide/*` package
+  names in docs vs the published `@glasel/client`.
 
 ## The plan
 
