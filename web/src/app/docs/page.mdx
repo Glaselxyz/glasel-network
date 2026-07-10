@@ -5,14 +5,14 @@ export const metadata = {
 
 # Introduction
 
-**Confide** is a confidential-computing network on Base. It lets smart contracts
+**Confide** is a confidential-computing network on Robinhood Chain. It lets smart contracts
 commission computations over **encrypted** inputs, run them on an off-chain
 multi-party-computation (MPC) network, and receive **threshold-signed** results
 that are verified back on-chain — all without any single party (or the chain
 itself) ever seeing the plaintext.
 
 It brings confidential computing to the EVM — encrypted inputs, multi-party
-computation, and threshold-verified results — and is deployed today on Base Sepolia.
+computation, and threshold-verified results — and is deployed today on Robinhood Chain testnet.
 
 <Callout type="note" title="Research preview">
   Confide is a working end-to-end system, not a production network. The MPC
@@ -37,7 +37,7 @@ whoever the result was sealed for.
 
 Confide spans three layers that share one encryption stack:
 
-- **Smart contracts (Base)** — eight UUPS-upgradeable contracts orchestrate node
+- **Smart contracts (Robinhood Chain)** — eight UUPS-upgradeable contracts orchestrate node
   registration, staking, cluster formation, MPC environments, fees, and the
   computation lifecycle.
 - **arxOS node network (Rust)** — operators stake `CONFIDE`, form clusters, watch
@@ -60,4 +60,4 @@ Anything whose inputs must stay secret but whose result must be verifiable:
 - [Quickstart](/docs/quickstart) — encrypt and commission your first computation.
 - [Core concepts](/docs/concepts) — nodes, clusters, MXEs, and computations.
 - [Architecture](/docs/architecture) — the contracts and the data flow.
-- [Deployments](/docs/network) — live Base Sepolia addresses.
+- [Deployments](/docs/network) — live Robinhood Chain testnet addresses.

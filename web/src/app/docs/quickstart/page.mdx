@@ -6,8 +6,8 @@ export const metadata = {
 # Quickstart
 
 This guide takes you from zero to a verified confidential computation against
-the live Base Sepolia deployment. You'll encrypt a typed value, commission it
-on-chain, and decrypt the threshold-signed result.
+the live Robinhood Chain testnet deployment. You'll encrypt a typed value,
+commission it on-chain, and decrypt the threshold-signed result.
 
 ## Install
 
@@ -25,17 +25,24 @@ bun add @confide/client viem
 
 ## 1. Create a client
 
-Point the client at a Base Sepolia RPC and the protocol addresses. The
-Coordinator, ClusterManager, and MXEFactory addresses are on the
+Point the client at a Robinhood Chain testnet RPC and the protocol addresses.
+Robinhood Chain isn't in `viem/chains`, so define it inline with `defineChain`.
+The Coordinator, ClusterManager, and MXEFactory addresses are on the
 [deployments page](/docs/network).
 
 ```ts title="client.ts"
 import { ConfideClient } from "@confide/client";
-import { createPublicClient, http } from "viem";
-import { baseSepolia } from "viem/chains";
+import { createPublicClient, http, defineChain } from "viem";
+
+const robinhoodTestnet = defineChain({
+  id: 46630,
+  name: "Robinhood Chain Testnet",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } },
+});
 
 export const confide = new ConfideClient({
-  publicClient: createPublicClient({ chain: baseSepolia, transport: http() }),
+  publicClient: createPublicClient({ chain: robinhoodTestnet, transport: http() }),
   addresses: {
     coordinator: "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc",
     clusterManager: "0xFd874609e9913292b3A701C162c29D0595affDAe",

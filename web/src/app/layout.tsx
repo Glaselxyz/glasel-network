@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     "private smart contracts",
     "MPC",
     "multi-party computation",
-    "Base",
+    "Robinhood Chain",
     "Ethereum",
     "front-running protection",
     "encrypted inputs",

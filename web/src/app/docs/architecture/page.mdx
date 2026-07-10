@@ -5,7 +5,7 @@ export const metadata = {
 
 # Architecture
 
-Confide is orchestrated by eight UUPS-upgradeable contracts on Base, an off-chain
+Confide is orchestrated by eight UUPS-upgradeable contracts on Robinhood Chain, an off-chain
 Rust node network, and a TypeScript client. The contracts never see plaintext —
 they route encrypted blobs, escrow fees, and verify signatures.
 
@@ -63,7 +63,7 @@ decentralizes.
   redirect a slash or accept a result from the wrong nodes.
 - **Push with a pull fallback.** Results are delivered via a gas-bounded callback;
   if it reverts, the requester can `pullResult` later. No result is ever lost.
-- **Threshold-ECDSA today, BLS-ready calldata.** Base lacks the EIP-2537
+- **Threshold-ECDSA today, BLS-ready calldata.** The L2 lacks the EIP-2537
   precompiles BLS aggregation needs, so Confide verifies a *set* of ECDSA
   signatures with identical calldata shape — a drop-in for BLS later.
 

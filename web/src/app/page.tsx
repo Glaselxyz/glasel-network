@@ -23,11 +23,14 @@ import { site, contracts } from "@/lib/site";
 import { short } from "@/lib/utils";
 
 const heroSample = `import { GlaselClient, ORDER_SCHEMA } from "@confide/client";
-import { createPublicClient, http } from "viem";
-import { baseSepolia } from "viem/chains";
+import { createPublicClient, http, defineChain } from "viem";
+
+const robinhood = defineChain({ id: 46630, name: "Robinhood Chain Testnet",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } } });
 
 const glasel = new GlaselClient({
-  publicClient: createPublicClient({ chain: baseSepolia, transport: http() }),
+  publicClient: createPublicClient({ chain: robinhood, transport: http() }),
   addresses: { coordinator, clusterManager, mxeFactory },
 });
 
@@ -38,7 +41,7 @@ const { encInputs } = glasel.encrypt({
   value: { price: 1000n, quantity: 7n, side: true, buyerKey },
 });
 
-// 2 — Commission on-chain. Inputs are never decrypted on Base.
+// 2 — Commission on-chain. Inputs are never decrypted on Robinhood Chain.
 const computationId = await commission(mxeId, compDefId, encInputs);
 
 // 3 — The network computes, threshold-signs, and settles.
@@ -71,7 +74,7 @@ const acts = [
   {
     n: "03",
     eyebrow: "Verify",
-    title: "Verified and settled on Base.",
+    title: `Verified and settled on ${site.networkLabel}.`,
     body: "The result arrives threshold-signed by the node cluster and verified on-chain before your contract acts on it. You don't have to trust the nodes — the math checks their work for you.",
     align: "right" as const,
   },
@@ -87,7 +90,7 @@ const features = [
   { icon: Lock, title: "End-to-end encrypted", body: "Your users' data is encrypted on their device with X25519 and Rescue-Prime — a cipher designed to run inside multi-party computation. Plaintext never exists on the network." },
   { icon: EyeOff, title: "The network computes blind", body: "The arxOS node network runs your compiled circuit across a cluster of independent operators. Each holds a fragment of the computation. None — below the threshold — can see the inputs." },
   { icon: ShieldCheck, title: "Results you don't have to trust", body: "Every result carries a BLS threshold signature from the cluster, verified on-chain before your callback fires. You don't take the network's word for it. The contract checks the math." },
-  { icon: Boxes, title: "Base handles the rules", body: "Eight smart contracts on Base schedule jobs, verify results, distribute fees, and slash misbehaving nodes. Transparent, auditable, and upgradeable — as protocol infrastructure should be." },
+  { icon: Boxes, title: `${site.networkLabel} handles the rules`, body: `Eight smart contracts on ${site.networkLabel} schedule jobs, verify results, distribute fees, and slash misbehaving nodes. Transparent, auditable, and upgradeable — as protocol infrastructure should be.` },
   { icon: Coins, title: "Nodes have skin in the game", body: "Every Arx node stakes $GLASEL to join a cluster. Miss a deadline or submit a wrong result and the stake is slashed automatically — no committee, no appeals. The incentives enforce themselves." },
 ];
 
@@ -99,7 +102,7 @@ const devBullets = [
 ];
 
 const useCases = [
-  { icon: TrendingDown, title: "Dark pools", body: "Place large trades without bots seeing your order first. The first private order book on Base." },
+  { icon: TrendingDown, title: "Dark pools", body: `Place large trades without bots seeing your order first. The first private order book on ${site.networkLabel}.` },
   { icon: Gavel, title: "Sealed auctions", body: "Bidders can't see each other's bids. The highest bid wins. The losing bids stay sealed." },
   { icon: Vote, title: "Private voting", body: "On-chain governance where votes are secret until the poll closes — no bandwagon effect, no coercion." },
   { icon: Bot, title: "Confidential AI", body: "Run model inference on encrypted inputs. The model never sees your users' prompts. Neither does anyone else." },
@@ -148,7 +151,7 @@ export default async function Home() {
                 className="mt-6 max-w-md text-lg leading-relaxed text-ink/85"
                 style={{ textShadow: "0 2px 24px rgba(6,12,20,0.92)" }}
               >
-                Confidential computing on Base — encrypted in, computed blind, verified on-chain.
+                Confidential computing on {site.networkLabel} — encrypted in, computed blind, verified on-chain.
               </p>
             </Reveal>
 
@@ -290,11 +293,11 @@ export default async function Home() {
         {/* Proof / stats */}
         <section className="container-page py-16">
           <Stagger className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard value={<CountUp value={8} />} label="contracts" body="Deployed and live on Base Sepolia — not a prototype, a full protocol stack." />
+            <StatCard value={<CountUp value={8} />} label="contracts" body={`Deployed and live on ${site.chain.name} — not a prototype, a full protocol stack.`} />
             <StatCard value={<CountUp value={90} />} label="tests" body="Foundry unit tests plus 20 checks against the live deployment. Every computation path is covered." />
             <StatCard value={<CountUp value={1} />} label="security audit" body="A critical and three high findings — all resolved before this version shipped." />
             <StatCard
-              value={<span className="text-2xl">Base Sepolia</span>}
+              value={<span className="text-2xl">{site.chain.name}</span>}
               label="live today"
               body={
                 <>
@@ -426,7 +429,7 @@ export default async function Home() {
             })}
             <MotionItem variants={staggerItem} className="h-full">
               <div className="card flex h-full flex-col items-start justify-center gap-4 p-6">
-                <p className="text-sm text-muted">Build the first one on Base.</p>
+                <p className="text-sm text-muted">Build the first one on {site.networkLabel}.</p>
                 <Magnetic>
                   <Link href="/docs/quickstart" className="btn-primary">
                     Start building <ArrowRight className="h-4 w-4" />

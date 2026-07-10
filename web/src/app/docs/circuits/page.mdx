@@ -49,7 +49,7 @@ confidevm simulate order_notional --inputs 1000,7
 # estimate the on-chain fee + deadline for a registered definition
 confidevm estimate-fee --comp-def $COMP_DEF --rpc $RPC --fee-oracle $FEE_ORACLE
 
-# deploy the definition to the ComputationRegistry on Base Sepolia
+# deploy the definition to the ComputationRegistry on Robinhood Chain testnet
 confidevm deploy-circuit order_notional.bin \
   --rpc $RPC --private-key $PK --registry $COMPUTATION_REGISTRY
 # → compDefId = 0x…

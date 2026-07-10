@@ -73,7 +73,7 @@ export function Footer() {
         <div className="container-page flex flex-col items-center justify-between gap-2 py-6 text-xs text-faint sm:flex-row">
           <span>© {new Date().getFullYear()} Glasel. Research preview.</span>
           <span className="font-mono text-faint">
-            Threshold-BLS · X25519 · Rescue-Prime · MPC on Base
+            Threshold-BLS · X25519 · Rescue-Prime · MPC on {site.networkLabel}
           </span>
         </div>
       </div>

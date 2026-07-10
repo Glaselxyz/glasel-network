@@ -5,7 +5,7 @@ export const metadata = {
 
 # Run a node
 
-**arxOS** is the Rust daemon node operators run. It watches Base for commissioned
+**arxOS** is the Rust daemon node operators run. It watches Robinhood Chain for commissioned
 computations, decrypts inputs inside its cluster, evaluates the circuit,
 re-seals the result, threshold-signs it, and submits it.
 
@@ -46,7 +46,7 @@ decryption share; the `[signers]` keys produce the threshold signatures (the
 first also funds and sends the `submitResult` transaction).
 
 ```toml title="arxos.toml"
-rpc_url          = "https://sepolia.base.org"
+rpc_url          = "https://rpc.testnet.chain.robinhood.com"
 poll_interval_ms = 2000
 start_block      = 0
 

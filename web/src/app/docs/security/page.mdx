@@ -30,7 +30,7 @@ does not. Read it before putting anything sensitive on the network.
 </Callout>
 
 - **Threshold ECDSA, not BLS.** Confide verifies a set of ECDSA signatures rather
-  than a single aggregated BLS signature, because Base lacks the EIP-2537
+  than a single aggregated BLS signature, because the L2 lacks the EIP-2537
   precompiles. Equally secure, higher gas; identical calldata shape.
 - **No `__gap` storage reserves.** Upgradeable contracts don't yet reserve
   namespaced storage (audit L-3, acknowledged) — relevant only to future upgrades.
