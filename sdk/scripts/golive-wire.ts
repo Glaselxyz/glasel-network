@@ -126,7 +126,7 @@ async function main() {
   const submitterKey = nodeKeys[0]!;
   const submitterAddr = nodeAddr(0);
 
-  console.log(`Network        : Base Sepolia (chainId ${await publicClient.getChainId()})`);
+  console.log(`Network        : ${chain.name} (chainId ${await publicClient.getChainId()})`);
   console.log(`Admin/deployer : ${admin.address}  (${formatEther(await publicClient.getBalance({ address: admin.address }))} ETH)`);
   console.log(`Submitter      : ${submitterAddr}  (${formatEther(await publicClient.getBalance({ address: submitterAddr }))} ETH)`);
   console.log(`Coordinator    : ${A.coordinator}`);
@@ -278,7 +278,7 @@ keys = ["${submitterKey}"]
 `;
   writeFileSync(TOML_PATH, toml);
 
-  console.log(`\n✅ Cluster is live and active on Base Sepolia.`);
+  console.log(`\n✅ Cluster is live and active on ${chain.name}.`);
   console.log(`   state  → ${STATE_PATH}`);
   console.log(`   config → ${TOML_PATH}`);
   console.log(`\n   Start the daemon on node-1, then run: bun run scripts/golive-demo.ts`);
