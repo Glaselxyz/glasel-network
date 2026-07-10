@@ -83,9 +83,45 @@ What still needs **you** (funds/keys, not code): a Robinhood-funded deployer, an
 after the deploy — setting the new `NEXT_PUBLIC_*` addresses on Vercel and funding the
 node submitter with Robinhood ETH.
 
+## ✅ Phase 0 — DONE (proven on Robinhood testnet, chain 46630)
+
+Deployed the full core protocol to Robinhood testnet and ran the self-contained
+`testnet.ts` harness: **20/20 checks passed, 0 failed.** The decisive ones:
+
+- **`submitResult` with on-chain BLS pairing verification succeeded** — this exercises
+  the `ecPairing` (0x08) + `modexp` (0x05) precompiles. **They work on Robinhood.**
+- The **tampered-result** case was correctly rejected (`BadBLSSignature`) — the pairing
+  check is not just present but sound.
+- Full lifecycle also passed: node register + stake, cluster propose/activate,
+  `setBlsGroupKey`, MXE + computation definition, commission, SDK decrypt of the sealed
+  result, plus slashing, pause/unpause and every access-control guard.
+
+**The one real migration risk is cleared.** Everything downstream is mechanical.
+
+Deployed addresses (Robinhood testnet 46630), from
+`contracts/broadcast/Deploy.s.sol/46630/run-latest.json`:
+
+| Contract | Address |
+|---|---|
+| GlaselToken | `0x045DFA9915322E4D007B0bd1958e214f3159767d` |
+| NodeRegistry | `0x4AB5A0B3b6fa16132e14964c236C0e798CD5adea` |
+| StakingManager | `0xCAb5286f5Ce94136c2aE7327abFa821DD56622D7` |
+| ClusterManager | `0xFd874609e9913292b3A701C162c29D0595affDAe` |
+| MXEFactory | `0x1187f7D55Ea30E5738e84a14E07b288dA9A07DF2` |
+| ComputationRegistry | `0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1` |
+| FeeOracle | `0xA17B0De7C45b4B3B139ff18FBDEA18E0d12bA2a3` |
+| ComputationCoordinator | `0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc` |
+
+Notes from the run:
+- Deploy cost ~0.0005 ETH at 0.02 gwei — L2 gas is negligible; 0.01 ETH funded the whole run.
+- `forge` prints an **EIP-3855 (PUSH0) "unsupported chain" warning** for 46630. It's a
+  false positive from forge's RPC capability probe — the contracts are compiled for
+  `cancun` (which uses PUSH0) and **all 20 checks executed successfully**, so PUSH0 works
+  in practice on testnet. Worth explicitly re-confirming before mainnet (chain 4663).
+
 ## The plan
 
-### Phase 0 — De-risk (½ day)
+### Phase 0 — De-risk (½ day) — ✅ complete (see result above)
 1. Fund a throwaway deployer from the Robinhood testnet faucet
    (https://faucet.testnet.chain.robinhood.com); put its key in `contracts/.env` and
    set `RPC_URL=https://rpc.testnet.chain.robinhood.com`.

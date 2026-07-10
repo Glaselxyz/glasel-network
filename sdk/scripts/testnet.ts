@@ -420,7 +420,7 @@ async function main() {
   // ── summary ────────────────────────────────────────────────────────────────
   section("Summary");
   console.log(`  ${pass} passed, ${fail} failed`);
-  console.log(`\nDeployed addresses (Base Sepolia):`);
+  console.log(`\nDeployed addresses (${chain.name}):`);
   for (const [k, v] of Object.entries(A)) console.log(`  ${k.padEnd(14)} ${v}`);
   process.exit(fail ? 1 : 0);
 }
