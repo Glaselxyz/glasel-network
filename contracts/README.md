@@ -63,7 +63,7 @@ forge test            # 76 tests: unit + integration lifecycle + invariants + re
 forge fmt
 ```
 
-### Deploy (Base Sepolia)
+### Deploy (Robinhood Chain testnet)
 
 ```bash
 ADMIN=0x... TREASURY=0x... \

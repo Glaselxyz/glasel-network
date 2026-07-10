@@ -22,7 +22,7 @@ distribution, hosting, and keeping a live network online, not new features.
 
 | Piece | Built today | Missing for 100 devs |
 |---|---|---|
-| Contracts | Live on Base Sepolia | Not verified on Basescan; no public address page |
+| Contracts | Live on Robinhood Chain testnet | Not verified on Blockscout; no public address page |
 | SDK (`@glasel/client`) | Works as a local package | Not published to npm |
 | CLI (`glaselvm`) | Builds from source | No installable binary |
 | Node (`glaseld`) | Has Docker + systemd files | No published image; no live cluster |
@@ -72,17 +72,17 @@ of the testnet.
 
 **Token faucet.** Build a simple faucet (a small web form or a chat bot) that sends
 test GLASEL to any developer address, with a daily limit per address to prevent
-abuse. Link it to the public Base Sepolia ETH faucet so developers can also cover
+abuse. Link it to the public Robinhood Chain testnet ETH faucet so developers can also cover
 gas. Without this, nobody can pay the job fee.
 
 **Hosted subgraph.** Deploy the subgraph to The Graph's testnet endpoint so
 developers can query the status and history of their computations from a public URL.
 
-**RPC access.** Recommend a reliable Base Sepolia RPC provider (a free tier from a
+**RPC access.** Recommend a reliable Robinhood Chain testnet RPC provider (a free tier from a
 major provider) in the docs, or run a light proxy, so developers are not blocked by
 the rate limits of the default public node.
 
-**Verify contracts on Basescan.** Get a Basescan API key and verify all eight
+**Verify contracts on Blockscout.** Get a Blockscout API key and verify all eight
 contracts. This lets developers read the code, trust it, and interact through the
 block explorer. It is a strong, free trust signal.
 
@@ -195,7 +195,7 @@ order; each one unblocks the next.
 
 **Phase B — Make it learnable.**
 4. Host the docs site and a tested quickstart (Workstream 3).
-5. Verify contracts on Basescan and deploy the hosted subgraph (Workstream 2).
+5. Verify contracts on Blockscout and deploy the hosted subgraph (Workstream 2).
 6. Publish templates and an examples repo (Workstream 3).
 
 **Phase C — Make it dependable.**
@@ -214,7 +214,7 @@ arrive.
 ## What this costs, roughly
 
 Almost everything uses free tiers: npm, crates.io, GitHub Releases, GitHub Container
-Registry, Vercel, The Graph testnet, Basescan verification, Discord. The only real
+Registry, Vercel, The Graph testnet, Blockscout verification, Discord. The only real
 recurring cost is the cloud cluster, on the order of 50 to 150 dollars a month, plus
 a domain name. The external audit and any bug bounty rewards are the larger,
 deferred spends tied to the mainnet milestone, not the testnet launch.

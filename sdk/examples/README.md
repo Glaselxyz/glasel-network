@@ -17,7 +17,7 @@ bun test examples/                        # runs the example's test
 The example is self-contained (the cluster's decrypt → compute → re-seal step is
 inlined) so you can learn the API with no infrastructure.
 
-### Talking to the live network (Base Sepolia)
+### Talking to the live network (Robinhood Chain testnet)
 
 Swap the local cluster keypair for the real key read from chain, and commission
 through the Coordinator:

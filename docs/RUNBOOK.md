@@ -33,7 +33,7 @@ On-chain: confirm the cluster is still active and the submitter has gas.
 
 1. Confirm at least one daemon is running and polling (log shows block numbers
    advancing).
-2. Check the submitter account has Base Sepolia ETH — `submitResult` (BLS pairing
+2. Check the submitter account has Robinhood Chain testnet ETH — `submitResult` (BLS pairing
    verify) is gas-heavy. Top it up from the admin/deployer.
 3. Confirm the daemon's BLS group key matches the on-chain `setBlsGroupKey` value
    (a mismatch makes every `submitResult` revert). The daemon logs its group key

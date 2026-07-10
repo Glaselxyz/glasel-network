@@ -1,27 +1,27 @@
-# Base Sepolia Testnet Deployment & Live Test Report
+# Robinhood Chain Testnet Deployment & Live Test Report
 
-The full Glasel core protocol is deployed to **Base Sepolia** (chainId `84532`)
+The full Glasel core protocol is deployed to **Robinhood Chain testnet** (chainId `46630`)
 and exercised end-to-end by an on-chain test harness that drives normal and
 edge-case flows from a single funded EOA. Results are accepted on-chain solely
 via the **threshold-BLS path** (`submitResult(bytes32,bytes,uint256[2])` — one
 aggregated BN254 signature verified by the `ecPairing` precompile); the legacy
 per-signer ECDSA path has been removed. Live suite: **20/20 passing**.
 
-## Deployed addresses (chainId 84532)
+## Deployed addresses (chainId 46630)
 
 | Contract | Address |
 |----------|---------|
-| GlaselToken | [`0xa9E29104Fa0287db5bb5BB048a729C93f746b09C`](https://sepolia.basescan.org/address/0xa9E29104Fa0287db5bb5BB048a729C93f746b09C) |
-| NodeRegistry | [`0xBA585F1f16b57e1443B1EA01143aa56D3fe432e0`](https://sepolia.basescan.org/address/0xBA585F1f16b57e1443B1EA01143aa56D3fe432e0) |
-| StakingManager | [`0x957100d7a9B2E85958D8e1Be503977b2b1D8a01A`](https://sepolia.basescan.org/address/0x957100d7a9B2E85958D8e1Be503977b2b1D8a01A) |
-| ClusterManager | [`0x875975030Ea94dDbEacfb5fcb9dAeaD4dC70A523`](https://sepolia.basescan.org/address/0x875975030Ea94dDbEacfb5fcb9dAeaD4dC70A523) |
-| MXEFactory | [`0x7CE839Eea76EA1F2F808E4c831a0910A23425f30`](https://sepolia.basescan.org/address/0x7CE839Eea76EA1F2F808E4c831a0910A23425f30) |
-| ComputationRegistry | [`0x359e6fd81BD1EAE7F4ae7a7Fdc29b1986f679F72`](https://sepolia.basescan.org/address/0x359e6fd81BD1EAE7F4ae7a7Fdc29b1986f679F72) |
-| FeeOracle | [`0x0d3cCA64CaAC0b9c1CBaE9420898A33d8b3615Fc`](https://sepolia.basescan.org/address/0x0d3cCA64CaAC0b9c1CBaE9420898A33d8b3615Fc) |
-| ComputationCoordinator | [`0x1FbB367715D26F752357dc7ee60b957CB40d8452`](https://sepolia.basescan.org/address/0x1FbB367715D26F752357dc7ee60b957CB40d8452) |
+| GlaselToken | [`0x045DFA9915322E4D007B0bd1958e214f3159767d`](https://explorer.testnet.chain.robinhood.com/address/0x045DFA9915322E4D007B0bd1958e214f3159767d) |
+| NodeRegistry | [`0x4AB5A0B3b6fa16132e14964c236C0e798CD5adea`](https://explorer.testnet.chain.robinhood.com/address/0x4AB5A0B3b6fa16132e14964c236C0e798CD5adea) |
+| StakingManager | [`0xCAb5286f5Ce94136c2aE7327abFa821DD56622D7`](https://explorer.testnet.chain.robinhood.com/address/0xCAb5286f5Ce94136c2aE7327abFa821DD56622D7) |
+| ClusterManager | [`0xFd874609e9913292b3A701C162c29D0595affDAe`](https://explorer.testnet.chain.robinhood.com/address/0xFd874609e9913292b3A701C162c29D0595affDAe) |
+| MXEFactory | [`0x1187f7D55Ea30E5738e84a14E07b288dA9A07DF2`](https://explorer.testnet.chain.robinhood.com/address/0x1187f7D55Ea30E5738e84a14E07b288dA9A07DF2) |
+| ComputationRegistry | [`0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1`](https://explorer.testnet.chain.robinhood.com/address/0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1) |
+| FeeOracle | [`0xA17B0De7C45b4B3B139ff18FBDEA18E0d12bA2a3`](https://explorer.testnet.chain.robinhood.com/address/0xA17B0De7C45b4B3B139ff18FBDEA18E0d12bA2a3) |
+| ComputationCoordinator | [`0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc`](https://explorer.testnet.chain.robinhood.com/address/0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc) |
 
 All 8 are ERC1967 (UUPS) proxies. Deployed + wired via
-`forge script script/Deploy.s.sol:Deploy --rpc-url https://sepolia.base.org --broadcast`.
+`forge script script/Deploy.s.sol:Deploy --rpc-url https://rpc.testnet.chain.robinhood.com --broadcast`.
 Total gas for deploy + full test suite: **~0.0017 ETH** at ~0.006 gwei.
 
 ## How to reproduce
@@ -70,7 +70,7 @@ re-runs skip already-registered/staked nodes and create a fresh cluster.
 - ✓ **H-1** commission against a dissolved cluster → `ClusterNotActive`
 
 ## Notes
-- **Public RPC consistency:** `sepolia.base.org` is load-balanced across
+- **Public RPC consistency:** `rpc.testnet.chain.robinhood.com` is load-balanced across
   replicas without read-your-writes guarantees. The harness polls verifying
   reads/simulations until consistent (`readUntil`, and `expectRevert` retries),
   rather than asserting immediately after a write.

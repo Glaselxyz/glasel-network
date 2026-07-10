@@ -86,11 +86,11 @@ Every step below is an actual action recorded on the Base blockchain. The main c
 
 **Step 5. Sign.** The 3 nodes jointly produce a single signature over the sealed result. This threshold signature proves that a required majority of the group agreed. One rogue node cannot forge it alone.
 
-**Step 6. Verify and deliver.** A node calls the `submitResult` function on the ComputationCoordinator, sending the sealed result plus that joint signature. The contract verifies the signature using a built in cryptographic check on Base, then records the result and holds the 5 GLASEL fee in escrow. If the nodes had missed the 150 second deadline, anyone could call `slashTimedOut` and the nodes would lose 5 percent of their deposit, which is 500 GLASEL each. If someone proves the answer is wrong during the one hour challenge window by calling `challengeResult`, the cheating nodes lose 30 percent, which is 3,000 GLASEL each. Once the window passes cleanly, `finalizeComputation` releases the fee, paying the operators 90 percent and the network treasury 10 percent.
+**Step 6. Verify and deliver.** A node calls the `submitResult` function on the ComputationCoordinator, sending the sealed result plus that joint signature. The contract verifies the signature using a built in cryptographic check on Robinhood Chain, then records the result and holds the 5 GLASEL fee in escrow. If the nodes had missed the 150 second deadline, anyone could call `slashTimedOut` and the nodes would lose 5 percent of their deposit, which is 500 GLASEL each. If someone proves the answer is wrong during the one hour challenge window by calling `challengeResult`, the cheating nodes lose 30 percent, which is 3,000 GLASEL each. Once the window passes cleanly, `finalizeComputation` releases the fee, paying the operators 90 percent and the network treasury 10 percent.
 
 **Step 7. Unlock.** The seller's app decrypts the sealed result with their private key and reads "Maria wins at 512,000." David's 498,000 and Aisha's 505,000 were never seen by the seller, the other buyers, or the machines, and never will be.
 
-Every function named above is a real call you can look up on Base. Swap the house auction for the hospital study, a bank fraud check, or a private vote, and the same contracts and the same seven steps apply.
+Every function named above is a real call you can look up on Robinhood Chain. Swap the house auction for the hospital study, a bank fraud check, or a private vote, and the same contracts and the same seven steps apply.
 
 ---
 
@@ -148,7 +148,7 @@ Glasel ships as a set of practical pieces so different people can use it in the 
 
 **The token (GLASEL).** Used to pay for computations, to secure the network through operator deposits, and to vote on how the network evolves.
 
-Everything is already live and tested on Base Sepolia, the public test version of the Base network, with a full suite of automated checks confirming it works end to end.
+Everything is already live and tested on Robinhood Chain testnet, the public test version of the Robinhood Chain network, with a full suite of automated checks confirming it works end to end.
 
 ---
 

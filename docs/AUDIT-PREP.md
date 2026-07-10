@@ -77,7 +77,7 @@ mistaken for production guarantees:
 
 ## 6. Live deployment
 
-Base Sepolia (chainId 84532), BLS-only contracts — addresses in `docs/TESTNET.md`,
+Robinhood Chain testnet (chainId 46630), BLS-only contracts — addresses in `docs/TESTNET.md`,
 live suite 20/20. Deployer is a throwaway testnet key (`contracts/.env`, gitignored).
 
 ## 7. Build + test for auditors

@@ -2,7 +2,7 @@
 
 Glasel is currently a **testnet**. Please read this before building on it.
 
-- **Test tokens have no value.** GLASEL on Base Sepolia is for testing only. It is
+- **Test tokens have no value.** GLASEL on Robinhood Chain testnet is for testing only. It is
   not for sale, cannot be bought, and will never be redeemable for anything.
 - **Things may reset.** Contracts may be redeployed, the operator cluster may be
   rebuilt, and balances/computations may be wiped without notice. Do not store

@@ -56,7 +56,7 @@ independently; entries are grouped by artifact.
 
 ---
 
-## Contracts (Base Sepolia)
+## Contracts (Robinhood Chain testnet)
 
 See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for the address ↔ version map.
 Contract upgrades are tracked there, not here, because they are deployments rather

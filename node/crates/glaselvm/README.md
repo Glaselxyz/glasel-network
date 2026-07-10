@@ -26,9 +26,9 @@ glaselvm simulate circuit.json --inputs 512000,498000
 # Compile the circuit to bytecode
 glaselvm compile circuit.json --out circuit.bin
 
-# Deploy the circuit definition to Base Sepolia
+# Deploy the circuit definition to Robinhood Chain testnet
 glaselvm deploy-circuit circuit.bin \
-  --rpc https://sepolia.base.org \
+  --rpc https://rpc.testnet.chain.robinhood.com \
   --private-key $PRIVATE_KEY \
   --registry <ComputationRegistry address>
 ```

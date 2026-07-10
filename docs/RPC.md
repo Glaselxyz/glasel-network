@@ -1,6 +1,6 @@
-# RPC Guidance (Base Sepolia)
+# RPC Guidance (Robinhood Chain testnet)
 
-The default public endpoint `https://sepolia.base.org` works for getting started,
+The default public endpoint `https://rpc.testnet.chain.robinhood.com` works for getting started,
 but it is **rate-limited and load-balanced across replicas** — fine for a demo,
 flaky under real use. Two specific gotchas the SDK already works around:
 
@@ -14,11 +14,11 @@ flaky under real use. Two specific gotchas the SDK already works around:
 ## Recommended for real use
 
 Use a dedicated provider's free tier and pass it as your RPC URL. Any of these work
-(pick one, create a free Base Sepolia app, copy the HTTPS URL):
+(pick one, create a free Robinhood Chain testnet app, copy the HTTPS URL):
 
-- Alchemy — Base Sepolia
-- Infura — Base Sepolia
-- QuickNode — Base Sepolia
+- Alchemy — Robinhood Chain testnet
+- Infura — Robinhood Chain testnet
+- QuickNode — Robinhood Chain testnet
 - Ankr / BlastAPI public or keyed endpoints
 
 Set it via the SDK transport, or `RPC_URL` for the scripts:
@@ -42,6 +42,6 @@ which removes most of the polling friction above.
 
 ## Faucet (gas)
 
-You also need Base Sepolia ETH for gas. Use a public Base Sepolia ETH faucet
+You also need Robinhood Chain testnet ETH for gas. Use a public Robinhood Chain testnet ETH faucet
 (Coinbase Developer Platform, Alchemy, etc.). Glasel's own faucet dispenses test
 **GLASEL** for computation fees — it does not dispense ETH.

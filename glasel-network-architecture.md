@@ -1,5 +1,5 @@
 # Glasel Network — Production Architecture
-## A Confidential Computing Network on Base, inspired by Arcium
+## A Confidential Computing Network on Robinhood Chain, inspired by Arcium
 
 **Version:** 1.0  
 **Target Chain:** Base (L2, OP Stack)  
@@ -123,7 +123,7 @@ Node operators earn fees proportional to computation tasks completed and respons
 └────────────────────┬────────────────────────────────────────┘
                      │ commission() / onComputationComplete()
 ┌────────────────────▼────────────────────────────────────────┐
-│  Glasel Protocol Contracts (Base mainnet)                  │
+│  Glasel Protocol Contracts (Robinhood Chain mainnet)                  │
 │  ComputationCoordinator ← MXEFactory ← ClusterManager      │
 │  NodeRegistry  StakingManager  FeeOracle  Governance        │
 │  ComputationRegistry  $CONFIDE ERC-20                       │
@@ -1697,10 +1697,10 @@ glaselvm compile circuits/dark_pool.arcis
 glaselvm simulate circuits/dark_pool.arcis \
   --inputs '{"orders": [{"price": 100, "quantity": 10, "side": "Buy"}]}'
 
-# Deploy circuit to ComputationRegistry on Base Sepolia
+# Deploy circuit to ComputationRegistry on Robinhood Chain testnet
 glaselvm deploy-circuit artifacts/dark_pool.circuit \
   --network base-sepolia \
-  --rpc https://sepolia.base.org \
+  --rpc https://rpc.testnet.chain.robinhood.com \
   --private-key $DEPLOYER_KEY
 # Output: compDefId = 0xabc123...
 
@@ -1911,8 +1911,8 @@ chain_id = 8453
 
 [network.testnet]
 chain   = "base-sepolia"
-rpc     = "https://sepolia.base.org"
-chain_id = 84532
+rpc     = "https://rpc.testnet.chain.robinhood.com"
+chain_id = 46630
 
 [contracts]
 coordinator       = "0x..."
@@ -2124,7 +2124,7 @@ function revealAndCommission(
 ```
 
 **Input encryption as baseline MEV protection:**  
-Even without commit-reveal, inputs are X25519-encrypted before they hit the chain. Observers on Base cannot read the inputs. Commit-reveal adds protection against *ordering* attacks where a searcher doesn't need to read the inputs but can delay or reorder them.
+Even without commit-reveal, inputs are X25519-encrypted before they hit the chain. Observers on Robinhood Chain cannot read the inputs. Commit-reveal adds protection against *ordering* attacks where a searcher doesn't need to read the inputs but can delay or reorder them.
 
 ### 11.4 Emergency Mechanisms
 
@@ -2210,7 +2210,7 @@ VRAM:    80 GB+
 # 3. Call proxy.initialize(...)
 # 4. Transfer ownership to TimelockController
 
-# Verify all contracts on Basescan
+# Verify all contracts on Blockscout
 forge script script/Deploy.s.sol --rpc-url base --broadcast --verify
 ```
 
@@ -2433,7 +2433,7 @@ glaselvm load-test \
 
 ### Phase 1 — Foundation (Months 1–4)
 
-**Goal:** Contracts and nodes working end-to-end on Base Sepolia.
+**Goal:** Contracts and nodes working end-to-end on Robinhood Chain testnet.
 
 | Deliverable | Owner | Month |
 |-------------|-------|-------|
@@ -2443,7 +2443,7 @@ glaselvm load-test \
 | Cerberus online phase + identifiable abort | Cryptography team | 3–4 |
 | Node daemon (chain listener + result submitter) | Infrastructure team | 2–3 |
 | BLS signature aggregation (off-chain + on-chain verify) | Infrastructure team | 3 |
-| Base Sepolia testnet deployment | All teams | 4 |
+| Robinhood Chain testnet deployment | All teams | 4 |
 | Internal end-to-end smoke test (3-node cluster, simple circuit) | All teams | 4 |
 
 ### Phase 2 — Developer Tooling (Months 3–6, overlapping)
@@ -2475,7 +2475,7 @@ glaselvm load-test \
 
 ### Phase 4 — Mainnet & Economics (Months 7–10)
 
-**Goal:** Production launch on Base mainnet.
+**Goal:** Production launch on Robinhood Chain mainnet.
 
 | Deliverable | Month |
 |-------------|-------|
@@ -2483,7 +2483,7 @@ glaselvm load-test \
 | Third-party cryptographic audit (Cerberus implementation) | 8 |
 | Bug bounty program launch | 8 |
 | Governance deployment + token distribution | 9 |
-| Base mainnet launch (permissioned genesis clusters) | 9 |
+| Robinhood Chain mainnet launch (permissioned genesis clusters) | 9 |
 | Node operator onboarding + staking live | 9–10 |
 | Permissionless cluster formation enabled | 10 |
 
@@ -2518,7 +2518,7 @@ glaselvm load-test \
 
 > *To be populated after Phase 1 deployment.*
 
-| Contract | Base Sepolia |
+| Contract | Robinhood Chain testnet |
 |----------|-------------|
 | GlaselToken (proxy) | TBD |
 | NodeRegistry (proxy) | TBD |

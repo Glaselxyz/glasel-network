@@ -1,7 +1,7 @@
 # Rebrand Plan: Confide → Glasel
 
 Rename the **"Confide" brand mark** to **"Glasel"** across contracts, SDK, Rust
-workspace, node daemon, subgraph, CI, and docs — then redeploy to Base Sepolia.
+workspace, node daemon, subgraph, CI, and docs — then redeploy to Robinhood Chain testnet.
 **Frontend (`web/`) is out of scope** (already rebranded by another instance),
 but see §7 for the address-propagation coordination it depends on.
 
@@ -10,7 +10,7 @@ but see §7 for the address-propagation coordination it depends on.
    `Confidential` and "confidential compute" — `ConfidentialBase`,
    `ConfidentialVote`, `ConfidentialWithPriority` stay as-is.
 2. **arxOS rebrands too** → `GlaselOS` / daemon `glaseld`.
-3. **Rename source + redeploy** to Base Sepolia (on-chain name/symbol changes →
+3. **Rename source + redeploy** to Robinhood Chain testnet (on-chain name/symbol changes →
    new addresses everywhere).
 4. **api / mcp: skipped** — no such components exist in the repo.
 
@@ -125,7 +125,7 @@ Do as one atomic change (workspace won't build mid-rename):
   leaving "confidential" the adjective.
 - **Gate:** subgraph `codegen`/`build` if toolchain present; CI yaml lint.
 
-### Phase 6 — Redeploy to Base Sepolia
+### Phase 6 — Redeploy to Robinhood Chain testnet
 - `forge script Deploy.s.sol --broadcast` with the renamed contracts → **new
   addresses + on-chain name/symbol = Glasel/GLASEL**.
 - Propagate the new addresses to the hardcoded spots:

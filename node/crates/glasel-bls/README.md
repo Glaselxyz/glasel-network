@@ -5,7 +5,7 @@ replacing the Phase-1 ECDSA threshold stand-in.
 
 Base doesn't ship the EIP-2537 (BLS12-381) precompiles the spec originally
 assumed, so Glasel uses **BN254**, whose pairing (`ecPairing`, 0x08) and
-`modexp` (0x05) precompiles *are* available on Base.
+`modexp` (0x05) precompiles *are* available on Robinhood Chain.
 
 ## Scheme
 
