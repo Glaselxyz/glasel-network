@@ -13,8 +13,8 @@ commission it on-chain, and decrypt the threshold-signed result.
 
 ```bash title="Terminal"
 # the TypeScript client
-bun add @confide/client viem
-# or: npm install @confide/client viem
+bun add @glasel/client viem
+# or: npm install @glasel/client viem
 ```
 
 <Callout type="tip">
@@ -31,7 +31,7 @@ The Coordinator, ClusterManager, and MXEFactory addresses are on the
 [deployments page](/docs/network).
 
 ```ts title="client.ts"
-import { ConfideClient } from "@confide/client";
+import { GlaselClient } from "@glasel/client";
 import { createPublicClient, http, defineChain } from "viem";
 
 const robinhoodTestnet = defineChain({
@@ -41,7 +41,7 @@ const robinhoodTestnet = defineChain({
   rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } },
 });
 
-export const confide = new ConfideClient({
+export const glasel = new GlaselClient({
   publicClient: createPublicClient({ chain: robinhoodTestnet, transport: http() }),
   addresses: {
     coordinator: "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc",
@@ -57,13 +57,13 @@ Read the cluster's X25519 public key from chain, then seal a typed value to it.
 The `encInputs` blob is what goes on-chain — it reveals nothing.
 
 ```ts title="encrypt.ts" {7-11}
-import { ORDER_SCHEMA, generateKeyPair, publicKeyFromPrivate } from "@confide/client";
-import { confide } from "./client";
+import { ORDER_SCHEMA, generateKeyPair, publicKeyFromPrivate } from "@glasel/client";
+import { glasel } from "./client";
 
 const me = generateKeyPair(); // your result-decryption keypair
 
-const clusterKey = await confide.getClusterPublicKeyForMXE(mxeId);
-const { encInputs } = confide.encrypt({
+const clusterKey = await glasel.getClusterPublicKeyForMXE(mxeId);
+const { encInputs } = glasel.encrypt({
   schema: ORDER_SCHEMA,
   clusterKey,
   value: { price: 1000n, quantity: 7n, side: true, buyerKey: publicKeyFromPrivate(me.privateKey) },
@@ -95,10 +95,10 @@ result to your key, and threshold-signs it. The SDK polls until it lands, then
 decrypts locally.
 
 ```ts title="result.ts"
-const { success, encResult } = await confide.watchComputation({ computationId });
+const { success, encResult } = await glasel.watchComputation({ computationId });
 if (!success) throw new Error("computation failed or was slashed");
 
-const result = confide.decryptResult({
+const result = glasel.decryptResult({
   encResult,
   privateKey: me.privateKey,
   schema: ORDER_SCHEMA,
@@ -111,6 +111,6 @@ That's the whole loop: **encrypt → commission → compute → verify → decry
 
 ## Next steps
 
-- [SDK reference](/docs/sdk) — every method on `ConfideClient`.
+- [SDK reference](/docs/sdk) — every method on `GlaselClient`.
 - [Computation lifecycle](/docs/lifecycle) — what happens on-chain at each step.
-- [Run a node](/docs/node) — operate an arxOS node and join a cluster.
+- [Run a node](/docs/node) — operate a GlaselOS node and join a cluster.

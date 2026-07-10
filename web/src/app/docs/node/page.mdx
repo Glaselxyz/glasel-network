@@ -1,19 +1,19 @@
 export const metadata = {
   title: "Run a node",
-  description: "Operate an arxOS node: register, stake, join a cluster, and serve computations.",
+  description: "Operate a GlaselOS node: register, stake, join a cluster, and serve computations.",
 };
 
 # Run a node
 
-**arxOS** is the Rust daemon node operators run. It watches Robinhood Chain for commissioned
+**GlaselOS** is the Rust daemon node operators run. It watches Robinhood Chain for commissioned
 computations, decrypts inputs inside its cluster, evaluates the circuit,
 re-seals the result, threshold-signs it, and submits it.
 
 ## Build
 
 ```bash title="Terminal"
-git clone https://github.com/confide-network/confide
-cd confide/node
+git clone https://github.com/Glaselxyz/glasel-network
+cd glasel-network/node
 cargo build -p arxos --release
 ```
 
@@ -41,7 +41,7 @@ cast send $STAKING "stake(address,uint256)" $NODE_ADDR $AMOUNT --rpc-url $RPC --
 
 ## Configure
 
-arxOS reads a single TOML file. The `[cluster]` key is this node's X25519
+GlaselOS reads a single TOML file. The `[cluster]` key is this node's X25519
 decryption share; the `[signers]` keys produce the threshold signatures (the
 first also funds and sends the `submitResult` transaction).
 

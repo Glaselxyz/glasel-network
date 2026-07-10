@@ -1,17 +1,17 @@
 export const metadata = {
   title: "SDK reference",
-  description: "The @confide/client API: ConfideClient, encryption, and codecs.",
+  description: "The @glasel/client API: GlaselClient, encryption, and codecs.",
 };
 
 # SDK reference
 
-`@confide/client` is the TypeScript client. It wraps a viem `PublicClient`,
+`@glasel/client` is the TypeScript client. It wraps a viem `PublicClient`,
 handles the encryption stack, and exposes a small typed surface.
 
-## ConfideClient
+## GlaselClient
 
 ```ts
-new ConfideClient({
+new GlaselClient({
   publicClient,                       // viem PublicClient
   addresses: { coordinator, clusterManager, mxeFactory? },
 });
@@ -85,7 +85,7 @@ import {
   encrypt, decrypt, seal,                   // crypto
   encodeValues, decodeValues, ORDER_SCHEMA, // codec
   serializePayload, deserializePayload,     // wire format
-} from "@confide/client";
+} from "@glasel/client";
 ```
 
 ## Types

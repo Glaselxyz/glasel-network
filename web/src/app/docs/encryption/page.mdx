@@ -5,8 +5,8 @@ export const metadata = {
 
 # Encryption stack
 
-Confide's confidentiality rests on one small, auditable encryption stack. It is
-implemented **twice** — TypeScript (`sdk/`) and Rust (`node/crates/confide-crypto`)
+Glasel's confidentiality rests on one small, auditable encryption stack. It is
+implemented **twice** — TypeScript (`sdk/`) and Rust (`node/crates/glasel-crypto`)
 — and proven byte-for-byte identical with cross-language test vectors.
 
 ## Field arithmetic
@@ -24,7 +24,7 @@ derived from keccak and the MDS matrix is a deterministic Cauchy matrix, so both
 implementations agree exactly.
 
 <Callout type="note">
-  Confide's Rescue constants are generated deterministically rather than taken
+  Glasel's Rescue constants are generated deterministically rather than taken
   from any published parameter set — what matters here is that the scheme is
   self-consistent across the TypeScript and Rust stacks, proven by shared vectors.
 </Callout>
@@ -53,7 +53,7 @@ The SDK encodes typed structs to field elements with a schema. For example the
 built-in `ORDER_SCHEMA`:
 
 ```ts title="schema.ts"
-import { encodeValues, ORDER_SCHEMA } from "@confide/client";
+import { encodeValues, ORDER_SCHEMA } from "@glasel/client";
 
 const elements = encodeValues(ORDER_SCHEMA, {
   price: 1000n,

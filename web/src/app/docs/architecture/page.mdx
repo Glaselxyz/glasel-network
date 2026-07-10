@@ -5,7 +5,7 @@ export const metadata = {
 
 # Architecture
 
-Confide is orchestrated by eight UUPS-upgradeable contracts on Robinhood Chain, an off-chain
+Glasel is orchestrated by eight UUPS-upgradeable contracts on Robinhood Chain, an off-chain
 Rust node network, and a TypeScript client. The contracts never see plaintext —
 they route encrypted blobs, escrow fees, and verify signatures.
 
@@ -40,7 +40,7 @@ decentralizes.
       │                                            │ event
       │                                            ▼
 ┌─────┴───────┐   submitResult(sig[])   ┌────────────────────────┐
-│  arxOS      │ ◀───────────────────────│  arxOS cluster (MPC)    │
+│  GlaselOS      │ ◀───────────────────────│  GlaselOS cluster (MPC)    │
 │  cluster    │   threshold-signed      │   • decrypt in-cluster  │
 └─────────────┘                         │   • run circuit         │
                                         │   • re-seal + sign      │
@@ -63,9 +63,10 @@ decentralizes.
   redirect a slash or accept a result from the wrong nodes.
 - **Push with a pull fallback.** Results are delivered via a gas-bounded callback;
   if it reverts, the requester can `pullResult` later. No result is ever lost.
-- **Threshold-ECDSA today, BLS-ready calldata.** The L2 lacks the EIP-2537
-  precompiles BLS aggregation needs, so Confide verifies a *set* of ECDSA
-  signatures with identical calldata shape — a drop-in for BLS later.
+- **Threshold BLS on BN254.** Results carry a single aggregated BLS signature
+  over the BN254 (alt_bn128) curve, verified on-chain with the `ecPairing` (0x08)
+  and `modexp` (0x05) precompiles — no EIP-2537 (BLS12-381) dependency. One
+  constant-size signature authorizes a result regardless of cluster size.
 
 See the [computation lifecycle](/docs/lifecycle) for the on-chain state machine
 and the [security model](/docs/security) for the trust assumptions.

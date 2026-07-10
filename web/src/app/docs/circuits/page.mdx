@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Circuits (Arcis)",
-  description: "Author, simulate, and deploy confidential circuits with confidevm.",
+  description: "Author, simulate, and deploy confidential circuits with glaselvm.",
 };
 
 # Circuits (Arcis)
@@ -17,7 +17,7 @@ arithmetic IR. An optimizer folds constants and removes dead nodes; a simulator
 evaluates it locally so you can test without any nodes.
 
 ```rust title="order_notional.rs"
-// Compiled by `confidevm compile`. The body runs entirely inside MPC.
+// Compiled by `glaselvm compile`. The body runs entirely inside MPC.
 #[confidential]
 fn order_notional(price: u64, quantity: u64) -> u64 {
     price * quantity
@@ -30,27 +30,27 @@ fn order_notional(price: u64, quantity: u64) -> u64 {
   node — the `#[confidential]` macro sugar is the part still on the roadmap.
 </Callout>
 
-## The confidevm CLI
+## The glaselvm CLI
 
 ```bash title="Terminal"
 # list bundled example circuits
-confidevm list
+glaselvm list
 
 # compile a circuit to the binary IR (+ .abi.json)
-confidevm compile order_notional --out order_notional.bin
+glaselvm compile order_notional --out order_notional.bin
 
 # inspect gate count, inputs, and outputs
-confidevm info order_notional.bin
+glaselvm info order_notional.bin
 
 # run it locally over sample inputs (comma-separated) — no nodes needed
-confidevm simulate order_notional --inputs 1000,7
+glaselvm simulate order_notional --inputs 1000,7
 # → 7000
 
 # estimate the on-chain fee + deadline for a registered definition
-confidevm estimate-fee --comp-def $COMP_DEF --rpc $RPC --fee-oracle $FEE_ORACLE
+glaselvm estimate-fee --comp-def $COMP_DEF --rpc $RPC --fee-oracle $FEE_ORACLE
 
 # deploy the definition to the ComputationRegistry on Robinhood Chain testnet
-confidevm deploy-circuit order_notional.bin \
+glaselvm deploy-circuit order_notional.bin \
   --rpc $RPC --private-key $PK --registry $COMPUTATION_REGISTRY
 # → compDefId = 0x…
 ```

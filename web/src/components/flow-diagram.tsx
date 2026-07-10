@@ -4,7 +4,7 @@ import { Reveal } from "./motion";
 const steps = [
   { icon: Lock, label: "Client encrypts", sub: "X25519 + Rescue-Prime", tag: "SDK" },
   { icon: Boxes, label: "Contract commissions", sub: "Coordinator + MXE", tag: "Robinhood" },
-  { icon: Cpu, label: "MPC computes", sub: "arxOS cluster", tag: "Off-chain" },
+  { icon: Cpu, label: "MPC computes", sub: "GlaselOS cluster", tag: "Off-chain" },
   { icon: FileCheck2, label: "Verify & decrypt", sub: "Threshold-signed result", tag: "Robinhood + SDK" },
 ];
 

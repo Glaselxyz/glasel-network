@@ -11,6 +11,11 @@ import { addresses, clusterId, defaultRpcUrl } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
+// Never cache the health response — the CDN would otherwise serve a stale block
+// number / cluster state. Applied to every return below.
+const NO_STORE = { "Cache-Control": "no-store, max-age=0, must-revalidate" } as const;
 
 const coordinatorAbi = [
   { type: "function", name: "paused", stateMutability: "view", inputs: [], outputs: [{ type: "bool" }] },
@@ -41,7 +46,7 @@ export async function GET() {
     out.blockNumber = (await client.getBlockNumber()).toString();
     out.rpcReachable = true;
   } catch {
-    return NextResponse.json(out, { status: 200 });
+    return NextResponse.json(out, { status: 200, headers: NO_STORE });
   }
 
   // Best-effort reads — a revert just leaves the field null rather than failing.
@@ -58,5 +63,5 @@ export async function GET() {
     })) as boolean;
   } catch { /* leave null */ }
 
-  return NextResponse.json(out, { status: 200 });
+  return NextResponse.json(out, { status: 200, headers: NO_STORE });
 }

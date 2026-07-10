@@ -2,12 +2,12 @@ import { Deployments } from "@/components/deployments";
 
 export const metadata = {
   title: "Deployments",
-  description: "Live Confide Network contract addresses on Robinhood Chain testnet.",
+  description: "Live Glasel Network contract addresses on Robinhood Chain testnet.",
 };
 
 # Deployments
 
-Confide's core protocol is live on **Robinhood Chain testnet** (chainId `46630`). All eight
+Glasel's core protocol is live on **Robinhood Chain testnet** (chainId `46630`). All eight
 contracts are `ERC1967` (UUPS) proxies, deployed and wired in dependency order,
 and exercised end-to-end by an on-chain test suite.
 
@@ -23,7 +23,7 @@ against a dissolved cluster. The full report is in `docs/TESTNET.md`.
 
 <Callout type="tip" title="Point the SDK here">
   Drop the Coordinator, ClusterManager, and MXEFactory addresses above into your
-  `ConfideClient` config and you're talking to the live network. See the
+  `GlaselClient` config and you're talking to the live network. See the
   [quickstart](/docs/quickstart).
 </Callout>
 

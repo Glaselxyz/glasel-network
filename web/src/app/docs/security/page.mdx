@@ -5,7 +5,7 @@ export const metadata = {
 
 # Security model
 
-This page is deliberately blunt about what Confide guarantees today and what it
+This page is deliberately blunt about what Glasel guarantees today and what it
 does not. Read it before putting anything sensitive on the network.
 
 ## What is trust-minimized
@@ -29,9 +29,10 @@ does not. Read it before putting anything sensitive on the network.
   then, do not treat input privacy as trustless against a malicious operator.
 </Callout>
 
-- **Threshold ECDSA, not BLS.** Confide verifies a set of ECDSA signatures rather
-  than a single aggregated BLS signature, because the L2 lacks the EIP-2537
-  precompiles. Equally secure, higher gas; identical calldata shape.
+- **Threshold BLS on BN254.** Results are authorized by one aggregated BLS
+  signature over BN254 (alt_bn128), checked on-chain via the `ecPairing`/`modexp`
+  precompiles (EIP-196/197) — no EIP-2537 dependency. A valid signature over one
+  result never authorizes a different result (verified on the live testnet).
 - **No `__gap` storage reserves.** Upgradeable contracts don't yet reserve
   namespaced storage (audit L-3, acknowledged) — relevant only to future upgrades.
 

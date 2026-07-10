@@ -22,7 +22,7 @@ import { MotionItem } from "@/components/motion-item";
 import { site, contracts } from "@/lib/site";
 import { short } from "@/lib/utils";
 
-const heroSample = `import { GlaselClient, ORDER_SCHEMA } from "@confide/client";
+const heroSample = `import { GlaselClient, ORDER_SCHEMA } from "@glasel/client";
 import { createPublicClient, http, defineChain } from "viem";
 
 const robinhood = defineChain({ id: 46630, name: "Robinhood Chain Testnet",
@@ -48,7 +48,7 @@ const computationId = await commission(mxeId, compDefId, encInputs);
 const { encResult } = await glasel.watchComputation({ computationId });
 const result = glasel.decryptResult({ encResult, privateKey, schema: ORDER_SCHEMA });`;
 
-const circuitSample = `// order_notional.rs  —  compiled with \`confidevm compile\`
+const circuitSample = `// order_notional.rs  —  compiled with \`glaselvm compile\`
 // The whole body runs inside MPC. No party, and no
 // on-chain observer, ever sees \`price\` or \`quantity\`.
 #[confidential]
@@ -88,10 +88,10 @@ const problems = [
 
 const features = [
   { icon: Lock, title: "End-to-end encrypted", body: "Your users' data is encrypted on their device with X25519 and Rescue-Prime — a cipher designed to run inside multi-party computation. Plaintext never exists on the network." },
-  { icon: EyeOff, title: "The network computes blind", body: "The arxOS node network runs your compiled circuit across a cluster of independent operators. Each holds a fragment of the computation. None — below the threshold — can see the inputs." },
+  { icon: EyeOff, title: "The network computes blind", body: "The GlaselOS node network runs your compiled circuit across a cluster of independent operators. Each holds a fragment of the computation. None — below the threshold — can see the inputs." },
   { icon: ShieldCheck, title: "Results you don't have to trust", body: "Every result carries a BLS threshold signature from the cluster, verified on-chain before your callback fires. You don't take the network's word for it. The contract checks the math." },
   { icon: Boxes, title: `${site.networkLabel} handles the rules`, body: `Eight smart contracts on ${site.networkLabel} schedule jobs, verify results, distribute fees, and slash misbehaving nodes. Transparent, auditable, and upgradeable — as protocol infrastructure should be.` },
-  { icon: Coins, title: "Nodes have skin in the game", body: "Every Arx node stakes $GLASEL to join a cluster. Miss a deadline or submit a wrong result and the stake is slashed automatically — no committee, no appeals. The incentives enforce themselves." },
+  { icon: Coins, title: "Nodes have skin in the game", body: "Every Glasel node stakes $GLASEL to join a cluster. Miss a deadline or submit a wrong result and the stake is slashed automatically — no committee, no appeals. The incentives enforce themselves." },
 ];
 
 const devBullets = [

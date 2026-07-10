@@ -1,11 +1,11 @@
 export const metadata = {
   title: "Introduction",
-  description: "What Confide is, why it exists, and how the pieces fit together.",
+  description: "What Glasel is, why it exists, and how the pieces fit together.",
 };
 
 # Introduction
 
-**Confide** is a confidential-computing network on Robinhood Chain. It lets smart contracts
+**Glasel** is a confidential-computing network on Robinhood Chain. It lets smart contracts
 commission computations over **encrypted** inputs, run them on an off-chain
 multi-party-computation (MPC) network, and receive **threshold-signed** results
 that are verified back on-chain — all without any single party (or the chain
@@ -15,7 +15,7 @@ It brings confidential computing to the EVM — encrypted inputs, multi-party
 computation, and threshold-verified results — and is deployed today on Robinhood Chain testnet.
 
 <Callout type="note" title="Research preview">
-  Confide is a working end-to-end system, not a production network. The MPC
+  Glasel is a working end-to-end system, not a production network. The MPC
   engine is a faithful single-process simulation of a cluster, and threshold
   signatures use ECDSA as a stand-in for BLS aggregation. See the
   [security model](/docs/security) for exactly what is and isn't trust-minimized today.
@@ -29,18 +29,18 @@ impossible to build honestly on-chain: dark pools leak order flow, auctions
 leak bids, votes leak ballots, and any scoring or matching logic leaks its
 inputs.
 
-Confide closes that gap. Inputs are encrypted on the client, computed on while
+Glasel closes that gap. Inputs are encrypted on the client, computed on while
 still encrypted, and only the *result* is revealed — and even then, only to
 whoever the result was sealed for.
 
 ## How it fits together
 
-Confide spans three layers that share one encryption stack:
+Glasel spans three layers that share one encryption stack:
 
 - **Smart contracts (Robinhood Chain)** — eight UUPS-upgradeable contracts orchestrate node
   registration, staking, cluster formation, MPC environments, fees, and the
   computation lifecycle.
-- **arxOS node network (Rust)** — operators stake `CONFIDE`, form clusters, watch
+- **GlaselOS node network (Rust)** — operators stake `CONFIDE`, form clusters, watch
   for commissioned computations, decrypt inputs inside the cluster, run a
   compiled circuit, re-seal the result, and threshold-sign it.
 - **Client SDK (TypeScript)** — encrypts typed inputs to a cluster key, reads the
