@@ -119,6 +119,31 @@ Notes from the run:
   `cancun` (which uses PUSH0) and **all 20 checks executed successfully**, so PUSH0 works
   in practice on testnet. Worth explicitly re-confirming before mainnet (chain 4663).
 
+## ✅ Phase 1 — real network verified end-to-end (Robinhood testnet 46630)
+
+- `golive-wire` wired a **live operator cluster**: 3 nodes registered + staked, cluster
+  `0xc7c048a51ef57b2daded02e5c692b6f0c63903a715013f69d670ac06b489934f` **active**,
+  BLS group key set, `order_notional` circuit compiled + deployed
+  (compDef `0x282ab976…`), MXE `0xdb7de481…` created. Emitted
+  `contracts/glaseld.golive.46630.toml` (rpc + contracts + submitter key).
+- **`glaseld` ran against that config and processed a real job**: commissioned
+  `0xe29a4ced…`, the daemon computed on the ciphertext and submitted a BLS-signed
+  result in **~7 s** (tx `0xc17b1415…`); the developer decrypted **38178 = 4242 × 9**.
+  Full confidential path proven on Robinhood: encrypt → node computes blind →
+  BLS-verified result on-chain → only the developer reads it.
+- **Web verified locally** against RH (`NEXT_PUBLIC_CHAIN=robinhood-testnet` + the 46630
+  addresses): `/api/status` → `rpcReachable: true`, `coordinatorAcceptingJobs: true`,
+  `clusterActive: true` (reading the RH cluster). Not yet flipped on the public Vercel
+  site — that's the cutover decision below.
+
+### Remaining to go public on Robinhood (the cutover)
+1. **Daemon on a durable host** — the Phase-1 daemon ran locally to verify. For 24/7 dev
+   use it must run on a droplet (as Base node-1 does), pointed at
+   `glaseld.golive.46630.toml`. Repointing the existing droplet retires the Base node.
+2. **Flip the public site** — set `NEXT_PUBLIC_CHAIN=robinhood-testnet` + the
+   `NEXT_PUBLIC_*` addresses on Vercel and redeploy → glasel.xyz + status page show RH.
+   (Both are outward-facing — do on an explicit go.)
+
 ## The plan
 
 ### Phase 0 — De-risk (½ day) — ✅ complete (see result above)
