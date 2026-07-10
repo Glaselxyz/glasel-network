@@ -171,7 +171,7 @@ async function main() {
   const nodeWallets = nodeAccts.map((acct) => createWalletClient({ account: acct, chain, transport: http(rpc) }));
   const nodeAddr = (i: number) => nodeAccts[i]!.address as Address;
 
-  console.log(`Network        : Base Sepolia (chainId ${await publicClient.getChainId()})`);
+  console.log(`Network        : ${chain.name} (chainId ${await publicClient.getChainId()})`);
   console.log(`Admin/deployer : ${admin.address}`);
   console.log(`Nodes          : ${nodeAccts.map((a) => a.address).join("\n                 ")}`);
   console.log(`Coordinator    : ${A.coordinator}`);

@@ -14,13 +14,16 @@
 #
 # What it does (all reversible / read-heavy until the deploy tx):
 #   • preflight: confirms the RPC's chain id matches the target + deployer is funded
-#   • forge script Deploy --broadcast        → 8 UUPS proxies on Robinhood
-#   • CHAIN=robinhood-* golive-wire.ts        → register+stake node, activate cluster,
-#                                               compile+deploy the demo circuit, createMXE
-#   • CHAIN=robinhood-* golive-demo.ts        → ONE real confidential job. If its result
-#                                               verifies on-chain, the BLS precompiles
-#                                               (ecPairing 0x08 / modexp 0x05) work — the
-#                                               single real risk of the migration is cleared.
+#   • forge script Deploy --broadcast   → 8 UUPS proxies on Robinhood
+#   • CHAIN=robinhood-* testnet.ts      → self-contained harness (NO daemon): the
+#                                         deployer funds 3 node sub-accounts, they
+#                                         register + stake, form + activate a cluster,
+#                                         set the BLS group key, commission a job, then
+#                                         BLS-sign + submitResult ON-CHAIN — plus a
+#                                         tampered-result rejection test. If submitResult
+#                                         verifies, the BLS precompiles (ecPairing 0x08 /
+#                                         modexp 0x05) work → the one real migration risk
+#                                         is cleared. Only the deployer wallet needs funds.
 set -euo pipefail
 
 NET="${1:-testnet}"
@@ -51,16 +54,17 @@ echo "▸ Deployer $DEPLOYER_ADDRESS balance: $(cast from-wei "$BAL") ETH"
 echo "▸ Deploying core protocol (forge script Deploy --broadcast)…"
 forge script script/Deploy.s.sol --rpc-url "$RPC" --broadcast
 
-# ---- 2. Wire the cluster + circuit + MXE ----------------------------------
-echo "▸ Wiring the operator cluster (golive-wire)…"
-( cd "$ROOT/sdk" && CHAIN="$CHAIN_KEY" RPC_URL="$RPC" bun run scripts/golive-wire.ts )
-
-# ---- 3. The de-risk job: one real confidential computation ----------------
-echo "▸ Running one real confidential job (golive-demo) — this exercises BLS verify…"
-( cd "$ROOT/sdk" && CHAIN="$CHAIN_KEY" RPC_URL="$RPC" bun run scripts/golive-demo.ts )
+# ---- 2. Self-contained de-risk: full flow incl. on-chain BLS submitResult ---
+echo "▸ Running the self-contained testnet harness (registers, stakes, forms a"
+echo "  cluster, commissions a job, BLS-signs + submitResult on-chain)…"
+( cd "$ROOT/sdk" && CHAIN="$CHAIN_KEY" RPC_URL="$RPC" bun run scripts/testnet.ts )
 
 echo
-echo "✅ Robinhood $NET deploy + wire + verified job complete."
+echo "✅ Robinhood $NET deploy + on-chain BLS-verified job complete."
+echo "   The BLS precompiles (ecPairing 0x08 / modexp 0x05) work on Robinhood."
 echo "   New addresses: contracts/broadcast/Deploy.s.sol/$WANT_ID/run-latest.json"
-echo "   Daemon config: contracts/glaseld.golive.$WANT_ID.toml"
-echo "   Next: point the node + web at these (Phase 1 in docs/ROBINHOOD-CHAIN-MIGRATION.md)."
+echo
+echo "   Next (Phase 1 — real network, needs the daemon), from sdk/:"
+echo "     CHAIN=$CHAIN_KEY RPC_URL=$RPC bun run scripts/golive-wire.ts"
+echo "   then run glaseld with the emitted glaseld.golive.$WANT_ID.toml and set the"
+echo "   NEXT_PUBLIC_* addresses on Vercel (docs/ROBINHOOD-CHAIN-MIGRATION.md)."
