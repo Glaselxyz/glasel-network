@@ -12,7 +12,7 @@ import { Wordmark, XLogo } from "./logo";
 const links = [
   { title: "Docs", href: "/docs" },
   { title: "Quickstart", href: "/docs/quickstart" },
-  { title: "Architecture", href: "/docs/architecture" },
+  { title: "Blog", href: "/blog" },
   { title: "Network", href: "/docs/network" },
 ];
 
@@ -51,7 +51,10 @@ export function Nav() {
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {links.map((l) => {
-              const active = l.href === "/docs" ? pathname.startsWith("/docs") : pathname === l.href;
+              const active =
+                l.href === "/docs" || l.href === "/blog"
+                  ? pathname.startsWith(l.href)
+                  : pathname === l.href;
               return (
                 <Link
                   key={l.href}

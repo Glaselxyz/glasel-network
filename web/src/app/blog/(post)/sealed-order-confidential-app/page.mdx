@@ -1,0 +1,430 @@
+import { PostHeader } from "@/components/post-header";
+
+export const metadata = {
+  title: "Build your first confidential app: a sealed order the chain can't read",
+  description:
+    "A hands-on, end-to-end guide to encrypting a value, computing on it while it stays sealed, and reading back a result only you can decrypt — running live on Robinhood Chain.",
+};
+
+<PostHeader
+  tag="Tutorial"
+  date="2026-07-12"
+  author="The Glasel team"
+  readingTime="11 min read"
+/>
+
+# Build your first confidential app: a sealed order the chain can't read
+
+Public blockchains have a quiet problem: they show everything. Every number you
+send to a contract — a bid, an order, a vote, a salary — is visible to everyone,
+forever, the moment it hits the mempool. For a lot of genuinely useful apps,
+that's a dealbreaker. Nobody wants to place an order that trading bots can read
+and jump ahead of before it even confirms.
+
+Glasel fixes the leak without giving up the chain. You encrypt your input on
+your own machine, the network computes on it **while it stays encrypted**, and
+you get back a result that only you can decrypt — with a proof, checked on-chain,
+that the computation was done honestly.
+
+In this guide we'll build the smallest thing that shows the whole idea working
+end to end: a **sealed order**. You'll send an order — a price and a quantity —
+that no one can read, have the network compute its value blind, and read back
+the answer that only you hold the key to. It runs against the live network
+today, and the whole thing is about forty lines of TypeScript.
+
+<Callout type="note" title="What you'll need">
+  Node 18 or newer (for a built-in `fetch`), or [Bun](https://bun.sh). And a
+  wallet with a little ETH on Robinhood Chain to pay gas — the computation
+  itself is free. That's it. No node to run, no keys to manage on a server.
+</Callout>
+
+## The shape of a confidential app
+
+Before any code, hold the mental model in your head — every Glasel app is the
+same five moves:
+
+1. **You make a keypair.** The private half never leaves your machine. It's the
+   only thing that can read the final result.
+2. **You encrypt your input** to the network's public key and drop the
+   ciphertext on-chain. To anyone watching, it's noise.
+3. **You commission the job** — a normal contract call that says "run circuit X
+   over this ciphertext."
+4. **The network computes blind.** A cluster of operators runs the circuit over
+   the encrypted data, re-seals the answer to *your* key, and threshold-signs
+   it. That signature is verified on-chain before the result is accepted.
+5. **You decrypt** the result locally. Nobody else ever could.
+
+The trick that makes this safe is that steps 2 through 4 never expose the
+plaintext — not to the operators, not to Glasel, not to the chain. The data goes
+in sealed and comes out sealed. Let's build it.
+
+## Step 1 — Install
+
+One package does the client-side work, and `viem` talks to the chain:
+
+```bash title="Terminal"
+npm install @glasel/client viem
+# or: bun add @glasel/client viem
+```
+
+The `@glasel/client` SDK is pure TypeScript — the encryption is done with
+audited primitives (`@noble/curves`, `@noble/hashes`), so it runs anywhere:
+Node, Bun, Deno, or straight in a browser. The only thing it needs from the
+outside world is an RPC endpoint, which `viem` provides.
+
+## Step 2 — Point a client at the network
+
+Robinhood Chain isn't in `viem`'s built-in chain list yet, so we describe it
+once with `defineChain`, then hand a read-only client the three protocol
+addresses it cares about. Think of `glasel` here as your window into the
+network: it reads cluster keys, encrypts inputs, and watches for results.
+
+```ts title="glasel.ts"
+import { GlaselClient } from "@glasel/client";
+import { createPublicClient, http, defineChain } from "viem";
+
+const robinhoodMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
+});
+
+export const publicClient = createPublicClient({
+  chain: robinhoodMainnet,
+  transport: http(),
+});
+
+export const glasel = new GlaselClient({
+  publicClient,
+  addresses: {
+    coordinator: "0x8fA215115eAf03Cfe86595c351E4AB095cCab001",
+    clusterManager: "0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b",
+    mxeFactory: "0x0Ee8170F29D0590B08D879Baa5e4AEc27Ae7d0eD",
+  },
+});
+```
+
+Those three addresses are the live deployment — the same ones on the
+[deployments page](/docs/network). The **Coordinator** is the contract you
+commission jobs through; the **ClusterManager** and **MXEFactory** are how the
+client looks up which operators are running your circuit and what public key to
+encrypt to. You never call the last two directly — the SDK does it for you.
+
+## Step 3 — Make a keypair only you hold
+
+Here's the piece that keeps the result yours. `generateKeyPair()` creates an
+X25519 keypair. The public half will travel with your order so the network knows
+who to seal the answer for; the private half stays on this machine and is the
+*only* key that can open the result later.
+
+```ts title="app.ts"
+import { generateKeyPair, publicKeyFromPrivate } from "@glasel/client";
+import { glasel } from "./glasel";
+
+const me = generateKeyPair();
+```
+
+This is worth pausing on, because it's the whole security story in one line. The
+network will do real work on your data and produce a real answer — but it seals
+that answer to `me.publicKey`, and without `me.privateKey` the sealed answer is
+just as unreadable to the operators as your input was. You are the only reader.
+
+## Step 4 — Encrypt the order
+
+Now we seal the input. First we ask the chain for the current cluster's public
+key — the network's "outer envelope" key — then we encrypt a typed value to it.
+
+Glasel inputs are **typed**: instead of hand-packing bytes, you hand the SDK a
+value that matches a schema and it encodes and encrypts it correctly. We'll use
+the built-in `ORDER_SCHEMA`, which describes a simple order — a price, a
+quantity, a side (buy or sell), and the buyer's key to seal the result to.
+
+```ts title="app.ts"
+import { ORDER_SCHEMA } from "@glasel/client";
+import { bytesToHex } from "viem";
+
+// The pre-deployed demo circuit + its execution environment (MXE).
+const mxeId = "0x50efc3d07c4b042b06260c7b5de822c9961e9576ce1a8054fe9f50ba42bb1a66";
+const compDefId = "0x2cef4b58d6963e92e8fd548d87c02ffd37472b3201c8d2bdb6a4377fed01ae64";
+
+const clusterKey = await glasel.getClusterPublicKeyForMXE(mxeId);
+
+const order = {
+  price: 1000n,
+  quantity: 7n,
+  side: false, // false = Buy, true = Sell
+  buyerKey: bytesToHex(publicKeyFromPrivate(me.privateKey)),
+};
+
+const { encInputs } = glasel.encrypt({
+  schema: ORDER_SCHEMA,
+  clusterKey,
+  value: order,
+  recipientPublicKey: me.publicKey,
+});
+```
+
+Two ids show up here that deserve a name. A **computation definition**
+(`compDefId`) is a compiled circuit — the actual program the network will run.
+An **MXE** (`mxeId`), short for MPC execution environment, binds that circuit to
+a live cluster of operators. For this tutorial we're pointing at a circuit that's
+already deployed and running — it computes an order's notional value,
+`price × quantity`, blind. (When you build your own app, you register your own
+circuit and MXE; more on that at the end.)
+
+After `encrypt`, `encInputs` is the sealed blob that will go on-chain. It's worth
+logging it once just to see what the chain sees:
+
+```ts
+console.log(encInputs.slice(0, 42), "…"); // 0x9f3c…  — noise, reveals nothing
+```
+
+That string is what a front-running bot, a nosy operator, or anyone reading the
+mempool gets to see. There is no `price` and no `quantity` in there to read.
+
+## Step 5 — Commission the computation
+
+Commissioning is just a contract call to the Coordinator. You pass the MXE and
+circuit ids, your `encInputs`, and a few callback parameters (unused here, so
+they're zeroed). The job is free right now, but we send a token `approve` first
+so the code already matches the shape it'd take if per-job fees are ever turned
+on — the Coordinator would pull the fee in GLASEL.
+
+We'll use a tiny `send` helper that estimates gas with some headroom and waits
+for the receipt; the full version is in the finished file below.
+
+```ts title="app.ts"
+import { parseEventLogs } from "viem";
+
+const token = "0xb71Cb43cC0809E17F520da97967F04307779133E";
+const coordinator = "0x8fA215115eAf03Cfe86595c351E4AB095cCab001";
+const ZERO = "0x0000000000000000000000000000000000000000";
+
+// Future-fee parity — harmless no-op while jobs are free.
+await send(wallet, {
+  address: token, abi: tokenAbi, functionName: "approve",
+  args: [coordinator, 2n ** 255n],
+});
+
+const receipt = await send(wallet, {
+  address: coordinator, abi: coordinatorAbi, functionName: "commission",
+  args: [mxeId, compDefId, encInputs, "", ZERO, "0x00000000", 0n, 0n],
+});
+
+// The Coordinator emits the job's id in a ComputationRequested event.
+const { computationId } = parseEventLogs({
+  abi: coordinatorAbi, logs: receipt.logs, eventName: "ComputationRequested",
+})[0].args;
+
+console.log("🛰  Commissioned", computationId);
+```
+
+The `computationId` that comes back in the `ComputationRequested` event is your
+handle on the job. The order is now on-chain, sealed, waiting for the network to
+pick it up.
+
+## Step 6 — Wait, then decrypt
+
+The operators watch the chain, spot your job, decrypt the input *inside the
+cluster* (no single operator ever sees it — that's what multi-party computation
+buys you), run the circuit, re-seal the answer to your key, and submit it with a
+threshold signature that the Coordinator verifies on-chain. The SDK wraps all of
+that in one call that polls until the result lands:
+
+```ts title="app.ts"
+const res = await glasel.watchComputation({ computationId, timeoutMs: 180_000 });
+if (!res.success) throw new Error("computation didn't complete");
+
+const result = glasel.decryptResult({
+  encResult: res.encResult,
+  privateKey: me.privateKey,
+  schema: ORDER_SCHEMA,
+});
+
+console.log("notional (price × quantity) =", result.price); // 7000n
+```
+
+`decryptResult` uses `me.privateKey` — the key that never left your machine — to
+open the sealed answer. For our order (price `1000`, quantity `7`) that's
+`7000`. The network computed it without ever seeing either number, and no one
+but you can read the result.
+
+## Run the whole thing
+
+Here's the complete file. Set `PRIVATE_KEY` in your environment to a funded
+Robinhood Chain wallet and run it.
+
+```ts title="app.ts"
+import {
+  GlaselClient, ORDER_SCHEMA,
+  generateKeyPair, publicKeyFromPrivate,
+} from "@glasel/client";
+import {
+  createPublicClient, createWalletClient, http, defineChain,
+  bytesToHex, parseEventLogs, type Hex,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+
+const robinhoodMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
+});
+
+const COORDINATOR = "0x8fA215115eAf03Cfe86595c351E4AB095cCab001";
+const TOKEN = "0xb71Cb43cC0809E17F520da97967F04307779133E";
+const ZERO = "0x0000000000000000000000000000000000000000";
+const MXE_ID = "0x50efc3d07c4b042b06260c7b5de822c9961e9576ce1a8054fe9f50ba42bb1a66";
+const COMP_DEF_ID = "0x2cef4b58d6963e92e8fd548d87c02ffd37472b3201c8d2bdb6a4377fed01ae64";
+
+const tokenAbi = [{
+  type: "function", name: "approve", stateMutability: "nonpayable",
+  inputs: [{ type: "address" }, { type: "uint256" }], outputs: [{ type: "bool" }],
+}] as const;
+
+const coordinatorAbi = [
+  {
+    type: "function", name: "commission", stateMutability: "nonpayable",
+    inputs: [
+      { name: "mxeId", type: "bytes32" }, { name: "compDefId", type: "bytes32" },
+      { name: "encInputs", type: "bytes" }, { name: "inputIpfsCid", type: "string" },
+      { name: "callbackTarget", type: "address" }, { name: "callbackSelector", type: "bytes4" },
+      { name: "callbackGasLimit", type: "uint256" }, { name: "maxFee", type: "uint256" },
+    ],
+    outputs: [{ type: "bytes32" }],
+  },
+  {
+    type: "event", name: "ComputationRequested",
+    inputs: [
+      { name: "computationId", type: "bytes32", indexed: true },
+      { name: "mxeId", type: "bytes32", indexed: true },
+      { name: "compDefId", type: "bytes32", indexed: true },
+      { name: "encInputs", type: "bytes", indexed: false },
+      { name: "inputIpfsCid", type: "string", indexed: false },
+      { name: "deadline", type: "uint64", indexed: false },
+    ],
+  },
+] as const;
+
+const publicClient = createPublicClient({ chain: robinhoodMainnet, transport: http() });
+const glasel = new GlaselClient({
+  publicClient,
+  addresses: {
+    coordinator: COORDINATOR,
+    clusterManager: "0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b",
+    mxeFactory: "0x0Ee8170F29D0590B08D879Baa5e4AEc27Ae7d0eD",
+  },
+});
+
+const account = privateKeyToAccount(process.env.PRIVATE_KEY as Hex);
+const wallet = createWalletClient({ account, chain: robinhoodMainnet, transport: http() });
+
+// Send a write, estimate gas with headroom, wait for the receipt.
+async function send(params: any) {
+  let gas: bigint | undefined;
+  try {
+    gas = await publicClient.estimateContractGas({ ...params, account });
+    gas = gas + (gas * 6n) / 10n;
+  } catch {}
+  const hash = await wallet.writeContract({ ...params, account, chain: robinhoodMainnet, ...(gas ? { gas } : {}) });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") throw new Error(`tx reverted: ${hash}`);
+  return receipt;
+}
+
+async function main() {
+  // 1. A keypair only you hold.
+  const me = generateKeyPair();
+
+  // 2. Seal the order to the live cluster key.
+  const clusterKey = await glasel.getClusterPublicKeyForMXE(MXE_ID);
+  const order = {
+    price: 1000n, quantity: 7n, side: false,
+    buyerKey: bytesToHex(publicKeyFromPrivate(me.privateKey)),
+  };
+  const { encInputs } = glasel.encrypt({
+    schema: ORDER_SCHEMA, clusterKey, value: order, recipientPublicKey: me.publicKey,
+  });
+
+  // 3. Commission on-chain.
+  await send({ address: TOKEN, abi: tokenAbi, functionName: "approve", args: [COORDINATOR, 2n ** 255n] });
+  const receipt = await send({
+    address: COORDINATOR, abi: coordinatorAbi, functionName: "commission",
+    args: [MXE_ID, COMP_DEF_ID, encInputs, "", ZERO, "0x00000000", 0n, 0n],
+  });
+  const computationId = (parseEventLogs({
+    abi: coordinatorAbi, logs: receipt.logs, eventName: "ComputationRequested",
+  })[0] as any).args.computationId as Hex;
+  console.log("🛰  Commissioned", computationId, "— waiting for the network…");
+
+  // 4. Wait for the network, then decrypt.
+  const res = await glasel.watchComputation({ computationId, timeoutMs: 180_000, pollMs: 3000 });
+  if (!res.success) throw new Error(`computation failed (status ${res.status})`);
+  const result = glasel.decryptResult({ encResult: res.encResult, privateKey: me.privateKey, schema: ORDER_SCHEMA });
+
+  console.log(`✅ notional (price × quantity) = ${result.price}  (expected ${order.price * order.quantity})`);
+}
+
+main().catch((e) => { console.error("❌", e.message); process.exit(1); });
+```
+
+```bash title="Terminal"
+PRIVATE_KEY=0xYourFundedKey npx tsx app.ts
+```
+
+You should see something like:
+
+```text title="Output"
+🛰  Commissioned 0x8a1f… — waiting for the network…
+✅ notional (price × quantity) = 7000  (expected 7000)
+```
+
+That's a real computation, run by a real operator, over data it never saw — in
+about seven seconds.
+
+## Why this is actually private
+
+It's easy to nod along, so let's be precise about what just happened and where
+the guarantee comes from:
+
+- **The input was never in the clear on-chain.** What you posted was
+  `encInputs` — a ciphertext sealed to the cluster key. The mempool, the block,
+  and every observer see noise.
+- **No single operator saw your data.** The cluster decrypts and computes with
+  multi-party computation, where the plaintext only ever exists split across
+  operators, never whole in any one place.
+- **The result is yours alone.** It's re-sealed to the public key you generated
+  in step 3. Only `me.privateKey` opens it.
+- **You didn't have to trust them anyway.** The result arrives with a threshold
+  BLS signature that the Coordinator verifies on-chain before accepting it. A
+  wrong answer doesn't get in.
+
+Take any one of those away and you'd have a weaker system. Together, they're the
+whole point: compute on data you can't see, and prove you did it right.
+
+## Make it your own
+
+We used a demo circuit that multiplies two numbers, because it makes the moving
+parts obvious. The interesting part is that *the circuit is the only thing that
+changes* — the encrypt → commission → verify → decrypt loop is identical for
+every app. Swap in a circuit that keeps only the highest bid and you have a
+**sealed-bid auction**. One that sums ballots and you have **private voting**.
+One that matches buy and sell orders and you have a **dark pool**.
+
+To write your own circuit and wire up its MXE, keep going here:
+
+- [Quickstart](/docs/quickstart) — the same loop, as reference docs.
+- [Circuits](/docs/circuits) — author and compile your own confidential program.
+- [Core concepts](/docs/concepts) — clusters, MXEs, and how a job flows through them.
+- [Glasel-Examples](https://github.com/Glaselxyz/Glasel-Examples) — runnable
+  auction, dark-pool, and voting examples you can clone today.
+
+<Callout type="warning" title="Research preview">
+  Glasel is live but unaudited, running with testnet-grade keys and a single
+  operator. The GLASEL token here has no value — build and experiment freely,
+  but don't route real funds through these contracts yet. See the
+  [security model](/docs/security) for exactly what is and isn't trust-minimized
+  today.
+</Callout>

@@ -10,7 +10,7 @@ const cols = [
       { title: "Introduction", href: "/docs" },
       { title: "Quickstart", href: "/docs/quickstart" },
       { title: "Core concepts", href: "/docs/concepts" },
-      { title: "SDK reference", href: "/docs/sdk" },
+      { title: "Blog", href: "/blog" },
     ],
   },
   {
