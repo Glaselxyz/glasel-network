@@ -6,7 +6,7 @@ export const metadata = {
 # Quickstart
 
 This guide takes you from zero to a verified confidential computation against
-the live Robinhood Chain testnet deployment. You'll encrypt a typed value,
+the live Robinhood Chain mainnet deployment. You'll encrypt a typed value,
 commission it on-chain, and decrypt the threshold-signed result.
 
 ## Install
@@ -25,7 +25,7 @@ bun add @glasel/client viem
 
 ## 1. Create a client
 
-Point the client at a Robinhood Chain testnet RPC and the protocol addresses.
+Point the client at a Robinhood Chain mainnet RPC and the protocol addresses.
 Robinhood Chain isn't in `viem/chains`, so define it inline with `defineChain`.
 The Coordinator, ClusterManager, and MXEFactory addresses are on the
 [deployments page](/docs/network).
@@ -34,19 +34,19 @@ The Coordinator, ClusterManager, and MXEFactory addresses are on the
 import { GlaselClient } from "@glasel/client";
 import { createPublicClient, http, defineChain } from "viem";
 
-const robinhoodTestnet = defineChain({
-  id: 46630,
-  name: "Robinhood Chain Testnet",
+const robinhoodMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } },
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
 });
 
 export const glasel = new GlaselClient({
-  publicClient: createPublicClient({ chain: robinhoodTestnet, transport: http() }),
+  publicClient: createPublicClient({ chain: robinhoodMainnet, transport: http() }),
   addresses: {
-    coordinator: "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc",
-    clusterManager: "0xFd874609e9913292b3A701C162c29D0595affDAe",
-    mxeFactory: "0x1187f7D55Ea30E5738e84a14E07b288dA9A07DF2",
+    coordinator: "0x8fA215115eAf03Cfe86595c351E4AB095cCab001",
+    clusterManager: "0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b",
+    mxeFactory: "0x0Ee8170F29D0590B08D879Baa5e4AEc27Ae7d0eD",
   },
 });
 ```

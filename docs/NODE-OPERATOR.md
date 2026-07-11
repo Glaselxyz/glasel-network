@@ -1,4 +1,4 @@
-# Running a Glasel GlaselOS Node (Robinhood Chain testnet)
+# Running a Glasel GlaselOS Node (Robinhood Chain mainnet)
 
 A node operator runs the **GlaselOS daemon**, which watches the
 `ComputationCoordinator` for `ComputationRequested` events, computes results
@@ -30,15 +30,15 @@ Then a cluster owner adds you to a cluster (`proposeCluster` → `activateCluste
 and registers the cluster's DKG group key (`setBlsGroupKey`).
 
 ## 4. Configure `glaseld.toml`
-Live Robinhood Chain testnet addresses are in [docs/TESTNET.md](TESTNET.md). **Never inline
+Live Robinhood Chain mainnet addresses are in [contracts/deployments/robinhood-mainnet.json](../contracts/deployments/robinhood-mainnet.json). **Never inline
 secrets** — use `env:`/`file:` references:
 ```toml
-rpc_url = "https://rpc.testnet.chain.robinhood.com"
+rpc_url = "https://rpc.mainnet.chain.robinhood.com"
 metrics_addr = "0.0.0.0:9090"          # Prometheus /metrics
 
 [contracts]
-coordinator = "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc"
-computation_registry = "0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1"
+coordinator = "0x8fA215115eAf03Cfe86595c351E4AB095cCab001"
+computation_registry = "0x7E1eef5089C06AbEBB7Ee6d8ab76FfAb3619a44c"
 
 [cluster]
 x25519_private_key = "env:GLASELD_X25519_KEY"

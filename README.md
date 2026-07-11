@@ -10,7 +10,7 @@ returns threshold-signed results; a TypeScript SDK handles client encryption.
 | Phase | Component | Status | Verification |
 |-------|-----------|--------|--------------|
 | 1 | **Smart contracts** (`contracts/`) | ✅ | 90 Foundry tests: unit + lifecycle + invariants + apps |
-| 2 | **SDK + encryption** (`sdk/`) | ✅ | cross-stack anvil e2e + live Robinhood Chain testnet suite (20/20) |
+| 2 | **SDK + encryption** (`sdk/`) | ✅ | cross-stack anvil e2e + live Robinhood Chain mainnet suite (20/20) |
 | 3 | **Node daemon `GlaselOS`** (`node/`) | ✅ | crypto interop vectors + full daemon e2e |
 | 4 | **Arcis circuit IR + `glaselvm` CLI** (`node/`) | ✅ | 9 circuit tests + circuit-driven daemon e2e |
 | 5 | **Reference apps** (DarkPool, vote, auction) | ✅ | tested via MockCoordinator |
@@ -20,7 +20,7 @@ returns threshold-signed results; a TypeScript SDK handles client encryption.
 ### Phase 7 — cryptographic maturity (all verified)
 
 - **Threshold BLS is the sole on-chain result path** — one aggregated BN254
-  signature verified by the `ecPairing` precompile. **Live on Robinhood Chain testnet**
+  signature verified by the `ecPairing` precompile. **Live on Robinhood Chain mainnet**
   ([docs/TESTNET.md](docs/TESTNET.md), 20/20).
 - **Real multi-party MPC** — Shamir + BGW over an **authenticated, encrypted Noise
   mesh** (`SecureTcpNet`), robust opening with cheating detection, run across
@@ -76,7 +76,7 @@ cd sdk  && bun run scripts/e2e-node.ts   # SDK ↔ chain ↔ GlaselOS daemon
 The two original Phase-1 simplifications have since been **resolved**:
 
 - ~~Threshold ECDSA stand-in for BLS~~ → **threshold BLS on BN254 is now the sole
-  on-chain path**, live on Robinhood Chain testnet.
+  on-chain path**, live on Robinhood Chain mainnet.
 - ~~Simulated single-process MPC~~ → **real multi-party MPC** (semi-honest BGW and
   malicious-secure MASCOT) over an authenticated encrypted mesh.
 

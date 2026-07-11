@@ -25,9 +25,9 @@ import { short } from "@/lib/utils";
 const heroSample = `import { GlaselClient, ORDER_SCHEMA } from "@glasel/client";
 import { createPublicClient, http, defineChain } from "viem";
 
-const robinhood = defineChain({ id: 46630, name: "Robinhood Chain Testnet",
+const robinhood = defineChain({ id: 4663, name: "Robinhood Chain",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } } });
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } } });
 
 const glasel = new GlaselClient({
   publicClient: createPublicClient({ chain: robinhood, transport: http() }),
@@ -96,7 +96,7 @@ const features = [
 
 const devBullets = [
   "Simulate locally before you deploy — no nodes needed for testing",
-  "One command from source to testnet",
+  "One command from source to mainnet",
   "Typed inputs — write structs, not field elements",
   "The encryption is identical on client and server — proven byte-for-byte",
 ];

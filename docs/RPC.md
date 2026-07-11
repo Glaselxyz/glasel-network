@@ -1,6 +1,6 @@
-# RPC Guidance (Robinhood Chain testnet)
+# RPC Guidance (Robinhood Chain mainnet)
 
-The default public endpoint `https://rpc.testnet.chain.robinhood.com` works for getting started,
+The default public endpoint `https://rpc.mainnet.chain.robinhood.com` works for getting started,
 but it is **rate-limited and load-balanced across replicas** — fine for a demo,
 flaky under real use. Two specific gotchas the SDK already works around:
 
@@ -14,11 +14,11 @@ flaky under real use. Two specific gotchas the SDK already works around:
 ## Recommended for real use
 
 Use a dedicated provider's free tier and pass it as your RPC URL. Any of these work
-(pick one, create a free Robinhood Chain testnet app, copy the HTTPS URL):
+(pick one, create a free Robinhood Chain mainnet app, copy the HTTPS URL):
 
-- Alchemy — Robinhood Chain testnet
-- Infura — Robinhood Chain testnet
-- QuickNode — Robinhood Chain testnet
+- Alchemy — Robinhood Chain mainnet
+- Infura — Robinhood Chain mainnet
+- QuickNode — Robinhood Chain mainnet
 - Ankr / BlastAPI public or keyed endpoints
 
 Set it via the SDK transport, or `RPC_URL` for the scripts:
@@ -42,6 +42,6 @@ which removes most of the polling friction above.
 
 ## Faucet (gas)
 
-You also need Robinhood Chain testnet ETH for gas. Use a public Robinhood Chain testnet ETH faucet
+You also need Robinhood Chain mainnet ETH for gas. Use a public Robinhood Chain mainnet ETH faucet
 (Coinbase Developer Platform, Alchemy, etc.). Glasel's own faucet dispenses test
 **GLASEL** for computation fees — it does not dispense ETH.

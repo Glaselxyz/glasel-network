@@ -77,8 +77,9 @@ mistaken for production guarantees:
 
 ## 6. Live deployment
 
-Robinhood Chain testnet (chainId 46630), BLS-only contracts — addresses in `docs/TESTNET.md`,
-live suite 20/20. Deployer is a throwaway testnet key (`contracts/.env`, gitignored).
+Robinhood Chain mainnet (chainId 4663), BLS-only contracts — addresses in
+`contracts/deployments/robinhood-mainnet.json`, live suite 20/20. Deployer is a
+throwaway single-purpose key (`contracts/.env` `MAINNET_PRIVATE_KEY`, gitignored).
 
 ## 7. Build + test for auditors
 

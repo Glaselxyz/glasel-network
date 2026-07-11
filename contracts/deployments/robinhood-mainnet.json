@@ -1,0 +1,19 @@
+{
+  "network": "robinhood-mainnet",
+  "chainId": 4663,
+  "rpc": "https://rpc.mainnet.chain.robinhood.com",
+  "explorer": "https://robinhoodchain.blockscout.com",
+  "deployer": "0x0b23C766853A710FDdbbf5bA2190ca5AFD363b78",
+  "deployedAt": "2026-07-11",
+  "note": "Live-staging deployment. GlaselToken here is the internal staking/fee token; the public GLASEL will launch on noxa.fun and, per Model B, the token-dependent contracts (StakingManager, FeeOracle, ComputationCoordinator) will be redeployed to reference it once it exists.",
+  "contracts": {
+    "GlaselToken": "0xb71Cb43cC0809E17F520da97967F04307779133E",
+    "NodeRegistry": "0x8727F63BFB99C50616bEC0142670991341F2684e",
+    "StakingManager": "0x6a297BB3B54303Ae62457C70b4d3818d22Bfef51",
+    "ClusterManager": "0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b",
+    "MXEFactory": "0x0Ee8170F29D0590B08D879Baa5e4AEc27Ae7d0eD",
+    "ComputationRegistry": "0x7E1eef5089C06AbEBB7Ee6d8ab76FfAb3619a44c",
+    "FeeOracle": "0x30747dDcBe086Aa3194F25f7dd0060698CF1C1d9",
+    "ComputationCoordinator": "0x8fA215115eAf03Cfe86595c351E4AB095cCab001"
+  }
+}

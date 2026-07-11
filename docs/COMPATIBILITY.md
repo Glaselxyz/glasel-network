@@ -4,27 +4,27 @@ Which SDK / CLI / node version works with which deployed contracts. Check this
 before upgrading — a mismatch can silently break your app (e.g. an ABI tuple that
 gained a field, or a renamed function).
 
-## Current testnet (Robinhood Chain testnet, chainId 46630)
+## Current deployment (Robinhood Chain mainnet, chainId 4663)
 
 | Artifact | Version | Notes |
 |---|---|---|
-| Contracts | rebrand redeploy (2026-06) | coordinator `0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc` |
+| Contracts | rebrand redeploy (2026-06) | coordinator `0x8fA215115eAf03Cfe86595c351E4AB095cCab001` |
 | SDK `@glasel/client` | `>=0.2.0` | 0.2.0 adds per-job result sealing (`recipientPublicKey`) |
 | CLI `glaselvm` | `0.1.0` | circuit authoring + `deploy-circuit` |
 | Node `glaseld` | current `main` | single-process engine, per-job sealing |
 
-### Live contract addresses (Robinhood Chain testnet)
+### Live contract addresses (Robinhood Chain mainnet)
 
 | Contract | Address |
 |---|---|
-| GlaselToken | `0x045DFA9915322E4D007B0bd1958e214f3159767d` |
-| NodeRegistry | `0x4AB5A0B3b6fa16132e14964c236C0e798CD5adea` |
-| StakingManager | `0xCAb5286f5Ce94136c2aE7327abFa821DD56622D7` |
-| ClusterManager | `0xFd874609e9913292b3A701C162c29D0595affDAe` |
-| MXEFactory | `0x1187f7D55Ea30E5738e84a14E07b288dA9A07DF2` |
-| ComputationRegistry | `0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1` |
-| FeeOracle | `0xA17B0De7C45b4B3B139ff18FBDEA18E0d12bA2a3` |
-| ComputationCoordinator | `0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc` |
+| GlaselToken | `0xb71Cb43cC0809E17F520da97967F04307779133E` |
+| NodeRegistry | `0x8727F63BFB99C50616bEC0142670991341F2684e` |
+| StakingManager | `0x6a297BB3B54303Ae62457C70b4d3818d22Bfef51` |
+| ClusterManager | `0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b` |
+| MXEFactory | `0x0Ee8170F29D0590B08D879Baa5e4AEc27Ae7d0eD` |
+| ComputationRegistry | `0x7E1eef5089C06AbEBB7Ee6d8ab76FfAb3619a44c` |
+| FeeOracle | `0x30747dDcBe086Aa3194F25f7dd0060698CF1C1d9` |
+| ComputationCoordinator | `0x8fA215115eAf03Cfe86595c351E4AB095cCab001` |
 
 ### Live cluster + ready-to-use MXE
 
@@ -34,9 +34,9 @@ are already deployed, so you can run a job without deploying anything — see
 
 | Id | Value |
 |---|---|
-| clusterId | `0xc7c048a51ef57b2daded02e5c692b6f0c63903a715013f69d670ac06b489934f` |
+| clusterId | `0xb24c314b548c6c54785d4ad1caa710d591c1c2dfe6c42e3153b87b8936babd63` |
 | mxeId | `0xd225ab0f770065fa35a9d279cc02d5397646a09d3801c803133ddec7fdfc2690` |
-| compDefId | `0x282ab9766b2e70d1464453af4e86f5c0194c0c07c2aa2c8e7ef0f0dc46365d7e` |
+| compDefId | `0x2cef4b58d6963e92e8fd548d87c02ffd37472b3201c8d2bdb6a4377fed01ae64` |
 
 The cluster is **Permissionless**, so you can also deploy your own circuit
 (`glaselvm compile … && glaselvm deploy-circuit …`), create your own MXE
@@ -46,17 +46,16 @@ The cluster is **Permissionless**, so you can also deploy your own circuit
 
 ```sh
 npm install @glasel/client viem
-export PRIVATE_KEY=0x...   # Robinhood Chain testnet key with ETH for gas
+export PRIVATE_KEY=0x...   # Robinhood Chain mainnet key with ETH for gas
 node quickstart.mjs        # from sdk/examples/quickstart.mjs
 ```
 
 Encrypts an order, commissions it on the live network, and decrypts the
 node-computed result (`price*quantity`) that only your key can read. **Right now
-testnet jobs are free — you only need Robinhood Chain testnet ETH for gas** (from a public
-ETH faucet). GLASEL is the network's token: developers pay job fees in GLASEL and
+jobs are free — you only need Robinhood Chain ETH for gas** (bridge real ETH to
+Robinhood Chain). GLASEL is the network's token: developers pay job fees in GLASEL and
 operators stake it. The per-job fee is currently set to 0 for launch and will be
-enabled as the testnet matures (you'll get GLASEL from the faucet then). See
-[RPC.md](RPC.md).
+enabled as the network matures. See [RPC.md](RPC.md).
 
 ## Rules of thumb
 

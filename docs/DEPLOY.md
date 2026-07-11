@@ -13,7 +13,7 @@ response see [RUNBOOK.md](RUNBOOK.md).
 | CLI `glaselvm` | `node/crates/glaselvm` | crates.io + GitHub Release binaries, on a `v*` tag (`release.yml`) |
 | Node `glaseld` | `node/crates/glaseld` | Docker image on GHCR, on a `v*` tag (`release.yml`) |
 | Web (docs + faucet + status) | `web/` | Vercel (or any Next.js host) |
-| Contracts | `contracts/` | live on Robinhood Chain testnet (see [COMPATIBILITY.md](COMPATIBILITY.md)) |
+| Contracts | `contracts/` | live on Robinhood Chain mainnet (see [COMPATIBILITY.md](COMPATIBILITY.md)) |
 | Cluster wiring | `sdk/scripts/golive-wire.ts` | run once to form/repair the cluster |
 
 ## 1. Cut a release
@@ -47,7 +47,7 @@ Deploy on Vercel (free tier) pointed at the repo with **root directory `web`**.
 | Var | Used by | Required? | Notes |
 |---|---|---|---|
 | `FAUCET_PRIVATE_KEY` | `/api/faucet` | to enable faucet | key holding `MINTER_ROLE` on GlaselToken. **Server-only.** Without it the faucet returns 503 (page still deploys). |
-| `RPC_URL` | faucet + status | recommended | dedicated Robinhood Chain testnet RPC (see [RPC.md](RPC.md)); falls back to the public node. |
+| `RPC_URL` | faucet + status | recommended | dedicated Robinhood Chain mainnet RPC (see [RPC.md](RPC.md)); falls back to the public node. |
 | `FAUCET_AMOUNT` | `/api/faucet` | optional | GLASEL per claim, whole tokens (default 1000, capped 100k). |
 | `FAUCET_MAX_CLAIMS_PER_DAY` | `/api/faucet` | optional | global daily ceiling (default 500) — bounds faucet-wallet gas spend. |
 | `NEXT_PUBLIC_RPC_URL` | client reads | optional | only if you want client-side reads on a dedicated RPC. |
@@ -61,7 +61,7 @@ with a shared store (Vercel KV / Upstash) — see the note in
 ### Faucet wallet
 
 The `FAUCET_PRIVATE_KEY` account must (a) hold `MINTER_ROLE` on GlaselToken and
-(b) keep enough Robinhood Chain testnet ETH for gas. Grant the role from the admin/deployer:
+(b) keep enough Robinhood Chain mainnet ETH for gas. Grant the role from the admin/deployer:
 
 ```solidity
 GlaselToken.grantRole(MINTER_ROLE, faucetAddress)
@@ -126,7 +126,7 @@ daemon has re-enqueue + graceful peer-down fallback.
 ```sh
 # 1. roster + Noise keys live in gitignored contracts/mpc-mesh.json
 #    (generate keys: cargo run -p glasel-mpc --example noise_keygen -- 3)
-cd sdk && bun run scripts/gen-mpc-configs.ts $(cast block-number --rpc-url https://rpc.testnet.chain.robinhood.com)
+cd sdk && bun run scripts/gen-mpc-configs.ts $(cast block-number --rpc-url https://rpc.mainnet.chain.robinhood.com)
 # 2. ship each /tmp/glaseld-node{1,2,3}.toml to its node as /root/glaseld.toml,
 #    enable+start glaseld on all three (mesh port 9100 must be reachable peer-to-peer)
 ```

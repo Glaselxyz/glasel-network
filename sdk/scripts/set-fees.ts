@@ -32,8 +32,10 @@ const params: [bigint, bigint, bigint, bigint, bigint] =
 
 function loadEnv() {
   const raw = readFileSync(`${ROOT}/contracts/.env`, "utf8");
-  const rpc = process.env.RPC_URL || (raw.match(/RPC_URL=(.+)/)?.[1] ?? defaultRpc(chain)).trim();
-  let pk = (raw.match(/PRIVATE_KEY=(.+)/)?.[1] ?? "").trim();
+  const rpc = process.env.RPC_URL || (raw.match(/^RPC_URL=(.+)/m)?.[1] ?? defaultRpc(chain)).trim();
+  // process.env wins (lets a caller target another chain without editing .env);
+  // the `^...=`/`m` anchor avoids matching MAINNET_PRIVATE_KEY when reading the file.
+  let pk = (process.env.PRIVATE_KEY || raw.match(/^PRIVATE_KEY=(.+)/m)?.[1] || "").trim();
   if (!pk.startsWith("0x")) pk = `0x${pk}`;
   return { rpc, pk: pk as Hex };
 }

@@ -70,7 +70,7 @@ order. 4/4 assertions green.
 ## Sample `glaseld.toml`
 
 ```toml
-rpc_url = "https://rpc.testnet.chain.robinhood.com"
+rpc_url = "https://rpc.mainnet.chain.robinhood.com"
 poll_interval_ms = 500
 start_block = 0
 run_once = false

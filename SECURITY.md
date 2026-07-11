@@ -1,8 +1,9 @@
 # Security Policy
 
-Glasel is a **research preview on a public testnet** (Robinhood Chain testnet,
-chainId 46630). Test tokens have **no value**; do not use real funds or trust
-these contracts with anything of value.
+Glasel is a **research preview**. It is deployed to **Robinhood Chain mainnet**
+(chainId 4663), but with deliberately **testnet-grade keys and a single operator
+node** (see below) — it has **not** been audited. The GLASEL token here has **no
+value**; do not use real funds or trust these contracts with anything of value.
 
 ## Reporting a vulnerability
 
@@ -21,14 +22,14 @@ give us a reasonable window to remediate before public disclosure.
 In scope: the Solidity contracts (`contracts/`), the TypeScript SDK (`sdk/`),
 the Rust node daemon (`node/`), and the web app (`web/`).
 
-Out of scope: the deliberately-weak **testnet demo keys** described below, denial
-of service against the single testnet operator node, and anything requiring
+Out of scope: the deliberately-weak **demo keys** described below, denial
+of service against the single operator node, and anything requiring
 compromise of a developer's own machine or wallet.
 
-## Testnet key model (important context for auditors)
+## Testnet-grade key model (important context for auditors)
 
-This repository targets a testnet and makes some deliberate simplifications that
-**must not** carry to mainnet:
+This deployment uses deliberate simplifications that **must not** carry to a
+value-bearing production deployment:
 
 - **Cluster BLS group secret** — the live cluster signs results with a *random*
   per-cluster BN254 secret that is generated at wiring time and stored **only** in

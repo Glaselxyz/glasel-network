@@ -2,12 +2,12 @@ import { Deployments } from "@/components/deployments";
 
 export const metadata = {
   title: "Deployments",
-  description: "Live Glasel Network contract addresses on Robinhood Chain testnet.",
+  description: "Live Glasel Network contract addresses on Robinhood Chain mainnet.",
 };
 
 # Deployments
 
-Glasel's core protocol is live on **Robinhood Chain testnet** (chainId `46630`). All eight
+Glasel's core protocol is live on **Robinhood Chain mainnet** (chainId `4663`). All eight
 contracts are `ERC1967` (UUPS) proxies, deployed and wired in dependency order,
 and exercised end-to-end by an on-chain test suite.
 
@@ -35,4 +35,4 @@ against a dissolved cluster. The full report is in `docs/TESTNET.md`.
 - SDK reads the cluster key, watches to completion, and decrypts the output
 
 Total gas for the full deploy plus the entire test run was about **0.0017 ETH** at
-Robinhood Chain testnet prices.
+Robinhood Chain mainnet prices.

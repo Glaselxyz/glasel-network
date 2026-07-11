@@ -6,25 +6,25 @@ The bar for a small, invited soft launch. Most of this is already done; the
 [DEPLOY.md](DEPLOY.md); for incidents see [RUNBOOK.md](RUNBOOK.md).
 
 ## Already live ✅
-- [x] Contracts deployed on Robinhood Chain testnet (permissionless; 100/100 tests)
+- [x] Contracts deployed on Robinhood Chain mainnet (permissionless; 100/100 tests)
 - [x] SDK published — `npm install @glasel/client`
 - [x] CLI published — crates.io + GitHub Release binaries + `curl | sh`
 - [x] Website + docs + status page live at **https://glasel.xyz**
 - [x] Operator cluster running (node-1) with engine-fallback + retry hardening
-- [x] Jobs work and are **free** (devs need only Robinhood Chain testnet ETH for gas) — proven
+- [x] Jobs work and are **free** (devs need only Robinhood Chain mainnet ETH for gas) — proven
       end-to-end from a fresh zero-token wallet
 - [x] Quickstart tested against the live network (`sdk/examples/quickstart.mjs`)
 - [x] Faucet live (optional while jobs are free)
 
 ## Must-do before inviting devs 🔴
 - [ ] **Top up node-1's submitter gas.** It signs + posts every result; running dry
-      stops all jobs. Send Robinhood Chain testnet ETH to the submitter:
+      stops all jobs. Send Robinhood Chain mainnet ETH to the submitter:
       `0x4E866EC90D6ECd1162D65C7e265e9B388B9f2BFf` (aim for ~0.05 ETH from a public
       faucet → ~1000+ submissions). Each `submitResult` (BLS pairing verify) costs
       ~0.00004 ETH.
 - [ ] **Use a dedicated RPC.** With ~10 devs + the node all on the public
-      `rpc.testnet.chain.robinhood.com`, rate limits cause dropped reads/jobs. Get a free
-      Alchemy/Infura Robinhood Chain testnet key and set it as `rpc_url` in node-1's
+      `rpc.mainnet.chain.robinhood.com`, rate limits cause dropped reads/jobs. Get a free
+      Alchemy/Infura Robinhood Chain mainnet key and set it as `rpc_url` in node-1's
       `glaseld.toml` (and `RPC_URL` on Vercel). See [RPC.md](RPC.md).
 
 ## Should-do (light for 10, but worth it) 🟡

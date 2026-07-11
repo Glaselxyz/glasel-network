@@ -46,14 +46,14 @@ decryption share; the `[signers]` keys produce the threshold signatures (the
 first also funds and sends the `submitResult` transaction).
 
 ```toml title="arxos.toml"
-rpc_url          = "https://rpc.testnet.chain.robinhood.com"
+rpc_url          = "https://rpc.mainnet.chain.robinhood.com"
 poll_interval_ms = 2000
 start_block      = 0
 
 [contracts]
-coordinator          = "0x9BC3E13B967f8152F618bbe7e0c624e8111ec4dc"
-cluster_manager      = "0xFd874609e9913292b3A701C162c29D0595affDAe"
-computation_registry = "0x7aFdCBd7917B6b0290eD97CaA1dEC045494662A1"
+coordinator          = "0x8fA215115eAf03Cfe86595c351E4AB095cCab001"
+cluster_manager      = "0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b"
+computation_registry = "0x7E1eef5089C06AbEBB7Ee6d8ab76FfAb3619a44c"
 
 [cluster]
 x25519_private_key = "0x…"   # this node's input-decryption share

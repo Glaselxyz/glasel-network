@@ -1697,10 +1697,10 @@ glaselvm compile circuits/dark_pool.arcis
 glaselvm simulate circuits/dark_pool.arcis \
   --inputs '{"orders": [{"price": 100, "quantity": 10, "side": "Buy"}]}'
 
-# Deploy circuit to ComputationRegistry on Robinhood Chain testnet
+# Deploy circuit to ComputationRegistry on Robinhood Chain mainnet
 glaselvm deploy-circuit artifacts/dark_pool.circuit \
   --network base-sepolia \
-  --rpc https://rpc.testnet.chain.robinhood.com \
+  --rpc https://rpc.mainnet.chain.robinhood.com \
   --private-key $DEPLOYER_KEY
 # Output: compDefId = 0xabc123...
 
@@ -1911,8 +1911,8 @@ chain_id = 8453
 
 [network.testnet]
 chain   = "base-sepolia"
-rpc     = "https://rpc.testnet.chain.robinhood.com"
-chain_id = 46630
+rpc     = "https://rpc.mainnet.chain.robinhood.com"
+chain_id = 4663
 
 [contracts]
 coordinator       = "0x..."
@@ -2433,7 +2433,7 @@ glaselvm load-test \
 
 ### Phase 1 — Foundation (Months 1–4)
 
-**Goal:** Contracts and nodes working end-to-end on Robinhood Chain testnet.
+**Goal:** Contracts and nodes working end-to-end on Robinhood Chain mainnet.
 
 | Deliverable | Owner | Month |
 |-------------|-------|-------|
@@ -2443,7 +2443,7 @@ glaselvm load-test \
 | Cerberus online phase + identifiable abort | Cryptography team | 3–4 |
 | Node daemon (chain listener + result submitter) | Infrastructure team | 2–3 |
 | BLS signature aggregation (off-chain + on-chain verify) | Infrastructure team | 3 |
-| Robinhood Chain testnet deployment | All teams | 4 |
+| Robinhood Chain mainnet deployment | All teams | 4 |
 | Internal end-to-end smoke test (3-node cluster, simple circuit) | All teams | 4 |
 
 ### Phase 2 — Developer Tooling (Months 3–6, overlapping)
@@ -2514,11 +2514,11 @@ glaselvm load-test \
 
 ---
 
-## Appendix A — Contract Addresses (Testnet)
+## Appendix A — Contract Addresses (Robinhood Chain Mainnet, chainId 4663)
 
-> *To be populated after Phase 1 deployment.*
+> Live addresses are tracked in `contracts/deployments/robinhood-mainnet.json`.
 
-| Contract | Robinhood Chain testnet |
+| Contract | Robinhood Chain mainnet |
 |----------|-------------|
 | GlaselToken (proxy) | TBD |
 | NodeRegistry (proxy) | TBD |
