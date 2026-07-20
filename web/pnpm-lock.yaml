@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@glasel/client':
+        specifier: ^0.2.0
+        version: 0.2.0(typescript@5.9.3)
       '@mdx-js/loader':
         specifier: ^3.1.0
         version: 3.1.1
@@ -112,6 +115,10 @@ packages:
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
+
+  '@glasel/client@0.2.0':
+    resolution: {integrity: sha512-6OAOkNVsjAu7dHjg1IlaO2dJLbqsjp19YsiH37GUL4Y4GlHSA5IfsISyfXCP6q9gpfV+a74V5BBQzyGj1xfApg==}
+    engines: {node: '>=18'}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1619,6 +1626,17 @@ snapshots:
   '@babel/runtime@7.29.7': {}
 
   '@dimforge/rapier3d-compat@0.12.0': {}
+
+  '@glasel/client@0.2.0(typescript@5.9.3)':
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      viem: 2.53.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

@@ -11,9 +11,9 @@ import { Wordmark, XLogo } from "./logo";
 
 const links = [
   { title: "Docs", href: "/docs" },
+  { title: "Playground", href: "/playground" },
   { title: "Quickstart", href: "/docs/quickstart" },
   { title: "Blog", href: "/blog" },
-  { title: "Network", href: "/docs/network" },
 ];
 
 export function Nav() {
