@@ -11,7 +11,6 @@ import {
   createPublicClient, createWalletClient, http, parseEventLogs, isHex, type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { coordinatorAbi } from "@glasel/client";
 import { activeChain } from "@/lib/chain";
 import { defaultRpcUrl } from "@/lib/site";
 import { DEMO, playgroundAddresses, MAX_ENCINPUTS_BYTES, RATE_LIMIT, ZERO_ADDRESS } from "@/lib/playground";
@@ -19,6 +18,39 @@ import { DEMO, playgroundAddresses, MAX_ENCINPUTS_BYTES, RATE_LIMIT, ZERO_ADDRES
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
+
+// The commission call + the event that carries the new job's id. (The SDK's
+// coordinatorAbi covers reads/result events, not ComputationRequested.)
+const commissionAbi = [
+  {
+    type: "function",
+    name: "commission",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "mxeId", type: "bytes32" },
+      { name: "compDefId", type: "bytes32" },
+      { name: "encInputs", type: "bytes" },
+      { name: "inputIpfsCid", type: "string" },
+      { name: "callbackTarget", type: "address" },
+      { name: "callbackSelector", type: "bytes4" },
+      { name: "callbackGasLimit", type: "uint256" },
+      { name: "maxFee", type: "uint256" },
+    ],
+    outputs: [{ type: "bytes32" }],
+  },
+  {
+    type: "event",
+    name: "ComputationRequested",
+    inputs: [
+      { name: "computationId", type: "bytes32", indexed: true },
+      { name: "mxeId", type: "bytes32", indexed: true },
+      { name: "compDefId", type: "bytes32", indexed: true },
+      { name: "encInputs", type: "bytes", indexed: false },
+      { name: "inputIpfsCid", type: "string", indexed: false },
+      { name: "deadline", type: "uint64", indexed: false },
+    ],
+  },
+] as const;
 
 // Best-effort per-IP limiter (per warm serverless instance). Combined with the
 // input cap + fixed circuit, it's enough to keep a demo relayer from being drained.
@@ -62,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     const params = {
       address: playgroundAddresses.coordinator,
-      abi: coordinatorAbi,
+      abi: commissionAbi,
       functionName: "commission" as const,
       args: [DEMO.mxeId, DEMO.compDefId, encInputs as Hex, "", ZERO_ADDRESS, "0x00000000", 0n, 0n],
     };
@@ -77,7 +109,7 @@ export async function POST(req: NextRequest) {
     if (receipt.status !== "success") {
       return NextResponse.json({ error: "commission reverted", txHash: hash }, { status: 502 });
     }
-    const logs = parseEventLogs({ abi: coordinatorAbi, logs: receipt.logs, eventName: "ComputationRequested" });
+    const logs = parseEventLogs({ abi: commissionAbi, logs: receipt.logs, eventName: "ComputationRequested" });
     const computationId = (logs[0] as any)?.args?.computationId as Hex | undefined;
     if (!computationId) {
       return NextResponse.json({ error: "no computation id in receipt", txHash: hash }, { status: 502 });
