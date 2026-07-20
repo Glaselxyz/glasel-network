@@ -6,7 +6,7 @@
   "deployer": "0x0b23C766853A710FDdbbf5bA2190ca5AFD363b78",
   "deployedAt": "2026-07-11",
   "tokenCutoverAt": "2026-07-12",
-  "note": "Model B token cutover complete. The protocol token is now the public GLS launched on noxa.fun (symbol GLS, 18 decimals). StakingManager and ComputationCoordinator were redeployed to reference GLS; every other contract (NodeRegistry, ClusterManager, MXEFactory, ComputationRegistry, FeeOracle) plus the live cluster/MXE/circuit is the original deployment, reused unchanged. Node operators are not yet staked in GLS (fixed-supply token, no mint) — a fundable follow-up; the network serves jobs in the interim since fees are free.",
+  "note": "Model B token cutover complete. The protocol token is now the public GLS launched on Pons (pons.family, symbol GLS, 18 decimals). StakingManager and ComputationCoordinator were redeployed to reference GLS; every other contract (NodeRegistry, ClusterManager, MXEFactory, ComputationRegistry, FeeOracle) plus the live cluster/MXE/circuit is the original deployment, reused unchanged. Node operators are not yet staked in GLS (fixed-supply token, no mint) — a fundable follow-up; the network serves jobs in the interim since fees are free.",
   "contracts": {
     "GLS": "0x17C0Ea83edf05859BC9339529ae85FcA71301D67",
     "NodeRegistry": "0x8727F63BFB99C50616bEC0142670991341F2684e",
