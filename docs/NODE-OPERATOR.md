@@ -37,7 +37,7 @@ rpc_url = "https://rpc.mainnet.chain.robinhood.com"
 metrics_addr = "0.0.0.0:9090"          # Prometheus /metrics
 
 [contracts]
-coordinator = "0x8fA215115eAf03Cfe86595c351E4AB095cCab001"
+coordinator = "0xf90C73ad8D700115afd8175eB2C1953C80d45157"
 computation_registry = "0x7E1eef5089C06AbEBB7Ee6d8ab76FfAb3619a44c"
 
 [cluster]

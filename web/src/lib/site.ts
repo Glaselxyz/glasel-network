@@ -81,7 +81,7 @@ function envDeployment(): Deployment {
     clusterId: env("NEXT_PUBLIC_CLUSTER_ID"),
     contracts: [
       { name: "ComputationCoordinator", address: a.coordinator, note: "Lifecycle orchestrator" },
-      { name: "GlaselToken", address: a.token, note: "GLASEL — stake & fees" },
+      { name: "GLS", address: a.token, note: "GLS — stake & fees" },
       { name: "StakingManager", address: a.staking, note: "Stake, rewards, slashing" },
       { name: "ClusterManager", address: a.clusterManager, note: "Cluster formation & keys" },
       { name: "NodeRegistry", address: a.registry, note: "glaseld node identities" },

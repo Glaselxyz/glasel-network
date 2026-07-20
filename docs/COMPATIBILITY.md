@@ -8,7 +8,7 @@ gained a field, or a renamed function).
 
 | Artifact | Version | Notes |
 |---|---|---|
-| Contracts | rebrand redeploy (2026-06) | coordinator `0x8fA215115eAf03Cfe86595c351E4AB095cCab001` |
+| Contracts | GLS token cutover (2026-07) | coordinator `0xf90C73ad8D700115afd8175eB2C1953C80d45157` |
 | SDK `@glasel/client` | `>=0.2.0` | 0.2.0 adds per-job result sealing (`recipientPublicKey`) |
 | CLI `glaselvm` | `0.1.0` | circuit authoring + `deploy-circuit` |
 | Node `glaseld` | current `main` | single-process engine, per-job sealing |
@@ -17,14 +17,14 @@ gained a field, or a renamed function).
 
 | Contract | Address |
 |---|---|
-| GlaselToken | `0xb71Cb43cC0809E17F520da97967F04307779133E` |
+| GLS (protocol token) | `0x17C0Ea83edf05859BC9339529ae85FcA71301D67` |
 | NodeRegistry | `0x8727F63BFB99C50616bEC0142670991341F2684e` |
-| StakingManager | `0x6a297BB3B54303Ae62457C70b4d3818d22Bfef51` |
+| StakingManager | `0x4Bd0307C5f6611f0a0947F037B891420359b48E3` |
 | ClusterManager | `0xcfC7f9dc4C311207B0Aa6DaF7DaDc63f6DbFA79b` |
 | MXEFactory | `0x0Ee8170F29D0590B08D879Baa5e4AEc27Ae7d0eD` |
 | ComputationRegistry | `0x7E1eef5089C06AbEBB7Ee6d8ab76FfAb3619a44c` |
 | FeeOracle | `0x30747dDcBe086Aa3194F25f7dd0060698CF1C1d9` |
-| ComputationCoordinator | `0x8fA215115eAf03Cfe86595c351E4AB095cCab001` |
+| ComputationCoordinator | `0xf90C73ad8D700115afd8175eB2C1953C80d45157` |
 
 ### Live cluster + ready-to-use MXE
 
