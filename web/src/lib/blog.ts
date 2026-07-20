@@ -12,6 +12,16 @@ export type Post = {
 /** Newest first. The index and the prev/next pager read from this list. */
 export const posts: Post[] = [
   {
+    slug: "repointing-a-live-network-at-a-new-token",
+    title: "Repointing a live network at a new token — without taking it down",
+    description:
+      "A developer's play-by-play of migrating Glasel's live confidential network onto the public GLS token: which contracts actually had to change, the one scary question, and the on-chain proof it worked — every step with a transaction link.",
+    date: "2026-07-12",
+    author: "The Glasel team",
+    readingTime: "9 min read",
+    tag: "Engineering",
+  },
+  {
     slug: "sealed-order-confidential-app",
     title: "Build your first confidential app: a sealed order the chain can't read",
     description:

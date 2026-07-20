@@ -1,0 +1,208 @@
+import { PostHeader } from "@/components/post-header";
+
+export const metadata = {
+  title: "Repointing a live network at a new token — without taking it down",
+  description:
+    "A developer's play-by-play of migrating Glasel's live confidential network onto the public GLS token: which contracts actually had to change, the one scary question, and the on-chain proof it worked.",
+};
+
+<PostHeader
+  tag="Engineering"
+  date="2026-07-12"
+  author="The Glasel team"
+  readingTime="9 min read"
+/>
+
+# Repointing a live network at a new token — without taking it down
+
+Our confidential-computing network has been live on Robinhood Chain for a while,
+quietly serving encrypted jobs. But it ran on an *internal* token — a placeholder
+for staking and fees, with no public existence. Then the real one arrived:
+**GLS**, launched on [noxa.fun](https://noxa.fun), a live token people can
+actually hold.
+
+So today's job was the kind that makes your palms a little sweaty: point a
+*running* protocol at a *new* token, on mainnet, without a maintenance window and
+without breaking anyone building on it. Here's exactly how it went — every step
+with a transaction you can open and check yourself.
+
+<Callout type="note" title="The addresses, up front">
+  GLS token: [`0x17C0…1d67`](https://robinhoodchain.blockscout.com/token/0x17C0Ea83edf05859BC9339529ae85FcA71301D67).
+  It's a fixed-supply launchpad token — 1,000,000,000 GLS, and crucially **no
+  mint function**. Remember that detail; it comes back to bite later.
+</Callout>
+
+## Step 1 — How bad is this, actually?
+
+Before touching anything, the only question that matters: *how much of the system
+knows about the token?* If the answer is "everywhere," this is a nightmare. So I
+did the least glamorous thing in software — I grepped.
+
+```bash title="Terminal"
+grep -rn "glaselToken\|IERC20" contracts/src
+```
+
+The relief was immediate. Out of eight deployed contracts, exactly **two** hold
+the token address: the **StakingManager** (where nodes stake and earn) and the
+**ComputationCoordinator** (which pulls and settles job fees). Everything else —
+the node registry, the cluster manager, the circuit registry, the fee oracle —
+never touches it. And the fee oracle only ever *computes* amounts; it doesn't
+hold the token at all.
+
+That's the whole migration surface: two contracts. Not eight.
+
+## Step 2 — Redeploy or upgrade?
+
+Both token-holding contracts store the address in a variable set once at
+initialization, with no setter to change it later. So there were two paths:
+upgrade them in place to add a setter, or redeploy fresh copies pointing at GLS.
+
+I went with **redeploy**. It's the cleaner story on-chain — new code, new
+addresses, nothing mutated in place — and it sidesteps a subtle trap with the old
+staking balances. The cost is that two addresses change, which means updating the
+site, docs, and the node daemon afterward. Fine. Predictable work beats clever
+work.
+
+## Step 3 — The one scary question
+
+Here's where that "no mint function" detail came back. The old token let us mint
+test-stake to nodes on demand. GLS can't — it's fixed supply. If the network
+*required* nodes to be freshly staked in GLS before it could serve a single job,
+this migration would be blocked on moving real tokens around.
+
+So I read the completion path line by line. What actually happens when a job
+finishes?
+
+```solidity title="ComputationCoordinator.sol (the finish path)"
+if (fee > 0) {
+    glaselToken.safeTransfer(address(stakingManager), fee);
+    stakingManager.distributeFees(parts, fee);
+}
+stakingManager.recordCompletion(parts);
+```
+
+Two things clicked. Fees are currently **free**, so the whole `fee > 0` block is
+skipped — no token ever moves. And `recordCompletion` just bumps a counter on
+each node; it doesn't require them to be staked. Slashing only happens on the
+*failure* path, never on a healthy job.
+
+Translation: **the network keeps serving jobs even with a brand-new, empty
+staking contract.** Re-staking nodes in GLS became a *later* errand, not a
+blocker. That one realization is what made this a calm afternoon instead of a
+frantic one.
+
+## Step 4 — A surgical deploy script
+
+Now I could write something small and precise. Not "redeploy everything" — just
+the two contracts, reusing every other live address exactly as-is, then rewiring
+the two references that need to point at the new pair.
+
+```solidity title="RedeployToken.s.sol"
+// 1. New StakingManager, denominated in GLS (reuses the live NodeRegistry).
+staking = _proxy(
+  address(new StakingManager()),
+  abi.encodeCall(StakingManager.initialize, (admin, gls, nodeRegistry, treasury))
+);
+
+// 2. New Coordinator: GLS + new Staking, every other dependency reused.
+coordinator = _proxy(
+  address(new ComputationCoordinator()),
+  abi.encodeCall(ComputationCoordinator.initialize, (Wiring({
+    admin: admin, mxeFactory: mxeFactory, registry: compRegistry,
+    clusterManager: clusterManager, feeOracle: feeOracle,
+    stakingManager: staking, glaselToken: gls
+  })))
+);
+
+// 3. Rewire — both callable by the admin.
+StakingManager(staking).setCoordinator(coordinator);  // grant the fee/slashing role
+ClusterManager(clusterManager).setStaking(staking);   // repoint the economic gate
+```
+
+The best moment of the day was discovering that `ClusterManager` already had a
+`setStaking()` function. That meant redeploying the staking contract *didn't*
+cascade into redeploying the cluster manager too — I could just point the
+existing, live cluster manager at the new staking address. The live cluster, the
+MPC environment, and the deployed circuit all stay exactly where they are.
+
+## Step 5 — Dry run, then broadcast
+
+Never broadcast a mainnet transaction you haven't simulated. The dry run came
+back green — deploys *and* both rewiring calls succeeded against live chain
+state — with a real gas estimate: about 0.00095 ETH. Then, for real:
+
+- **New StakingManager deployed** → [`0x4Bd0…48E3`](https://robinhoodchain.blockscout.com/address/0x4Bd0307C5f6611f0a0947F037B891420359b48E3) · tx [`0x8f6deb93…`](https://robinhoodchain.blockscout.com/tx/0x8f6deb93189c36fdac22fcb0387c0c775fcba44cd678cd0009d199d77810c20a)
+- **New ComputationCoordinator deployed** → [`0xf90C…5157`](https://robinhoodchain.blockscout.com/address/0xf90C73ad8D700115afd8175eB2C1953C80d45157) · tx [`0x7ede1c29…`](https://robinhoodchain.blockscout.com/tx/0x7ede1c29e862ea4e00491481625f39637672ff2181a47b630db7e04bf73e0fa5)
+- **Rewired** (Coordinator granted its role on Staking) · tx [`0xbfe185e7…`](https://robinhoodchain.blockscout.com/tx/0xbfe185e782aebbfe3ae544d947e56f0a1f99db3e248fca0e1123646ffad2e504)
+
+Two contracts, one script, done.
+
+## Step 6 — Trust, but verify (on-chain)
+
+Deploying is not the same as deploying *correctly*. Before telling anyone, I read
+the new contracts' state straight off the chain:
+
+```bash title="Terminal"
+cast call 0xf90C…5157 "glaselToken()(address)"     # → 0x17C0…1d67  ✓ GLS
+cast call 0xf90C…5157 "stakingManager()(address)"  # → 0x4Bd0…48E3  ✓ new Staking
+cast call 0x4Bd0…48E3 "glaselToken()(address)"     # → 0x17C0…1d67  ✓ GLS
+cast call 0xcfC7…A79b "staking()(address)"          # → 0x4Bd0…48E3  ✓ repointed
+```
+
+Six checks, all green: both contracts point at GLS, the Coordinator holds its
+role on the new Staking, and the cluster manager's economic gate is repointed.
+Then I updated the node daemon's config to watch the new Coordinator and
+restarted it.
+
+## Step 7 — The moment of truth
+
+None of the above means anything until a real encrypted job flows through the new
+Coordinator end to end. So I commissioned one — a sealed order, computed blind:
+
+```text title="Output"
+Requester : 0x0b23…3b78
+Coordinator (new, GLS): 0xf90C73ad8D700115afd8175eB2C1953C80d45157
+🛰  Commissioned 0x385f8ae1… (tx 0x9eb1bc2a…)
+   waiting for the live node to compute + submit…
+✅ served in 4s — notional = 7000 (expected 7000)
+🎉 New GLS-denominated Coordinator is live and serving.
+```
+
+Four seconds. The full loop, on the new contracts, with proof at both ends:
+
+- **The job, commissioned** (encrypted input on-chain) · tx [`0x9eb1bc2a…`](https://robinhoodchain.blockscout.com/tx/0x9eb1bc2a72b16986247b9caedfe7ba3722897b21f853f1769b1c6d7cbb713c14)
+- **The result, computed by a live node and verified on-chain** · tx [`0x20ce7f55…`](https://robinhoodchain.blockscout.com/tx/0x20ce7f55834b77b62db3f71e3b6456a2a8f1bba8c7db3d0ab656b0f66d1a6549)
+
+That second transaction is my favourite. It's a node submitting a
+threshold-signed answer that the Coordinator *checks* before accepting — the
+network computed on a number it never actually saw, and proved it did so
+honestly. On the brand-new GLS-denominated contracts.
+
+## Step 8 — Make it readable, make it public
+
+Two last things. First, verify the contract source on the block explorer, so
+anyone can read exactly what they're interacting with — both implementations are
+now [verified on Blockscout](https://robinhoodchain.blockscout.com/address/0xf90C73ad8D700115afd8175eB2C1953C80d45157),
+each proxy recognized and linked to its verified code. Second, flip the addresses
+everywhere they live: the live site, the docs, the quickstart, the examples repo.
+The [quickstart](/docs/quickstart) and [tutorial](/blog/sealed-order-confidential-app)
+already point at the new Coordinator.
+
+## What I deliberately left for later
+
+Node operators aren't yet staked in GLS. Because it's fixed-supply, that means
+actually *moving* real GLS to the operator accounts — a funding decision, not a
+code one — plus a small change to swap our old `mint` call for a `transfer`. And
+as Step 3 proved, the network runs perfectly well in the meantime. Shipping the
+migration and shipping the staking are two different tasks, and pretending
+otherwise is how you turn a calm afternoon into a bad one.
+
+<Callout type="warning" title="Research preview">
+  Glasel is live but unaudited, running with testnet-grade keys and a single
+  operator. Read the code, kick the tyres, build something — but don't route real
+  value through these contracts yet. See the [security model](/docs/security).
+</Callout>
+
+That's the whole migration: one grep to size it up, one insight to de-risk it, one
+small script to do it, and a chain full of receipts to prove it. Come
+[build on it](/docs/quickstart).
